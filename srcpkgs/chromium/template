@@ -1,14 +1,14 @@
 # Template file for 'chromium'
 pkgname=chromium
 # See http://www.chromium.org/developers/calendar for the latest version
-version=66.0.3359.170
+version=67.0.3396.101
 revision=1
 short_desc="Google's attempt at creating a safer, faster, and more stable browser"
 maintainer="Juan RP <xtraeme@voidlinux.eu>"
 homepage="http://www.chromium.org/"
 license="BSD"
 distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/${pkgname}-${version}.tar.xz"
-checksum=864da6649d19387698e3a89321042193708b2d9f56b3a778fb552166374871de
+checksum=2cd53913f22fbf98219edfa162770486c404a953ef88c58631be8d04ea5b3332
 
 only_for_archs="i686 x86_64 x86_64-musl"
 lib32disabled=yes
