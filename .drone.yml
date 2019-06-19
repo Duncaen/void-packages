@@ -1,0 +1,29 @@
+kind: pipeline
+name: default
+
+steps:
+    - name: schedule
+      image: voidlinux/masterdir-x86_64
+      commands:
+          - xbps-checkvers
+      when:
+          branch: [ drone ]
+          event: [ push ]
+
+steps:
+    - name: x86_64
+      image: voidlinux/masterdir-x86_64
+      commands:
+          - ./xbps-src pkg "$PKG"
+      when:
+          event: [ promote ]
+          target: [ x86_64 ]
+
+steps:
+    - name: x86_64-musl
+      image: voidlinux/masterdir-x86_64-musl
+      commands:
+          - ./xbps-src pkg "$PKG"
+      when:
+          event: [ promote ]
+          target: [ x86_64-musl ]
