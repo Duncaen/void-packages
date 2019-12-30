@@ -1,0 +1,50 @@
+# Template file for 'testlib'
+pkgname=testlib
+version=0.2
+revision=1
+hostmakedepends=""
+makedepends=""
+depends=""
+short_desc="symbol package version test"
+maintainer="Duncaen <duncaen@voidlinux.org>"
+license="BSD-2-clause"
+homepage="https://voidlinux.org"
+
+do_build() {
+	case "$version" in
+	0.1)
+		echo "int foo(void);" >testlib.h
+		echo "int foo(void) { return 1; }" >testlib.c
+		$CC $CFLAGS -c -o testlib.o testlib.c
+		$CC -shared $LDFLAGS -Wl,-soname,libtestlib.so.0 testlib.o -o libtestlib.so.${version}
+		ln -sf libtestlib.so.${version} libtestlib.so.0
+		ln -sf libtestlib.so.${version} libtestlib.so
+		;;
+	0.2)
+		echo "int foo(void);" >testlib.h
+		echo "int bar(void);" >>testlib.h
+		echo "int foo(void) { return 1; }" >testlib.c
+		echo "int bar(void) { return 1; }" >>testlib.c
+		$CC $CFLAGS -c -o testlib.o testlib.c
+		$CC -shared $LDFLAGS -Wl,-soname,libtestlib.so.0 testlib.o -o libtestlib.so.${version}
+		ln -sf libtestlib.so.${version} libtestlib.so.0
+		ln -sf libtestlib.so.${version} libtestlib.so
+		;;
+	esac
+}
+
+do_install() {
+	vmkdir usr/lib
+	vinstall libtestlib.so.${version} 755 usr/lib
+	vcopy libtestlib.so* usr/lib
+	vinstall testlib.h 644 usr/include
+}
+
+testlib-devel_package() {
+	short_desc+=" - development files"
+	depends="${sourcepkg}>=${version}_${revision}"
+	pkg_install() {
+		vmove usr/include
+		vmove "usr/lib/*.so"
+	}
+}

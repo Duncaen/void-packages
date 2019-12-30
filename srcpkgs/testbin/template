@@ -1,0 +1,30 @@
+# Template file for 'testbin'
+pkgname=testbin
+version=0.2
+revision=1
+hostmakedepends=""
+makedepends="testlib-devel"
+depends=""
+short_desc="symbol package version test"
+maintainer="Duncaen <duncaen@voidlinux.org>"
+license="BSD-2-clause"
+homepage="https://voidlinux.org"
+
+do_build() {
+	echo "#include <stdio.h>" >main.c
+	echo "#include <testlib.h>" >>main.c
+	case "${version}" in
+	0.1)
+		echo 'int main(void) { printf("%d\n", foo()); return 0; }' >>main.c
+		;;
+	0.2)
+		echo 'int main(void) { printf("%d %d\n", foo(), bar()); return 0; }' >>main.c
+		;;
+	esac
+	$CC $CFLAGS -c -o main.o main.c
+	$CC $LDFLAGS -o testbin main.c -ltestlib
+}
+
+do_install() {
+	vbin testbin
+}
