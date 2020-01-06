@@ -1,0 +1,49 @@
+# Template file for 'rpi4-u-boot'
+pkgname=rpi4-u-boot
+version=2019.10
+revision=1
+wrksrc="u-boot-${version}"
+#create_wrksrc=yes
+only_for_archs="aarch64*"
+#configure_args=""
+make_build_args="ARCH=arm"
+#make_install_args=""
+#conf_files=""
+#make_dirs="/var/log/dir 0755 root root"
+hostmakedepends="bc bison flex"
+makedepends=""
+depends=""
+short_desc="Raspberry Pi 4 Das u-boot bootloader"
+maintainer="Duncaen <duncaen@voidlinux.org>"
+license="GPL-2.0-or-later"
+homepage="https://www.denx.de/wiki/U-Boot/"
+distfiles="https://ftp.denx.de/pub/u-boot/u-boot-${version}.tar.bz2"
+checksum=8d6d6070739522dd236cba7055b8736bfe92b4fac0ea18ad809829ca79667014
+
+if [ "$CROSS_BUILD" ]; then
+	make_build_args+=" CROSS_COMPILE=${XBPS_CROSS_TRIPLET}-"
+else
+	make_build_args+=" HOSTARCH=arm"
+fi
+
+post_extract() {
+	touch include/stddef.h  # musl hack
+	vsed '1itypedef unsigned long ulong;' \
+		-i include/image.h -i tools/mkimage.h -i tools/proftool.c
+}
+do_configure() {
+	unset CFLAGS CXXFLAGS LDFLAGS
+
+	make ${makejobs} ${make_build_args} distclean
+	make ${makejobs} ${make_build_args} rpi_4_defconfig
+}
+
+do_build() {
+	unset CFLAGS CXXFLAGS LDFLAGS
+
+	make ${makejobs} ${make_build_args}
+}
+do_install() {
+	vmkdir boot
+	vinstall u-boot.bin 644 boot rpi4-u-boot.bin
+}
