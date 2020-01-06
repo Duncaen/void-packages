@@ -1,0 +1,273 @@
+# Template file for 'rpi4-linux4.19'
+#
+# We track the latest Raspberry Pi LTS kernel as that is what is used in the
+# official Raspbian distribution. This is currently 4.19:
+#
+#   https://www.raspberrypi.org/forums/viewtopic.php?f=29&t=224931
+
+_githash="c078c64fecb325ee86da705b91ed286c90aae3f6"
+_gitshort="${_githash:0:7}"
+
+pkgname=rpi4-linux4.19
+version=4.19.86
+revision=1
+wrksrc="linux-${_githash}"
+maintainer="Duncaen <duncaen@voidlinux.org>"
+homepage="http://www.kernel.org"
+license="GPL-2.0-only"
+short_desc="The Linux kernel for Raspberry Pi 4 (${version%.*} series [git ${_gitshort}])"
+distfiles="https://github.com/raspberrypi/linux/archive/${_githash}.tar.gz"
+checksum=debde96b598e3253e0961db5673178691314781f62aca61e2d2d7cda5e089258
+
+nodebug=yes
+nostrip=yes
+noverifyrdeps=yes
+noshlibprovides=yes
+
+archs="armv7l* aarch64*"
+hostmakedepends="perl kmod uboot-mkimage libressl-devel bc bison flex"
+makedepends="ncurses-devel"
+
+_kernver="${version}_${revision}"
+triggers="kernel-hooks"
+kernel_hooks_version="${_kernver}"
+
+# These files could be modified when an external module is built.
+mutable_files="
+ /usr/lib/modules/${_kernver}/modules.dep
+ /usr/lib/modules/${_kernver}/modules.dep.bin
+ /usr/lib/modules/${_kernver}/modules.symbols
+ /usr/lib/modules/${_kernver}/modules.symbols.bin
+ /usr/lib/modules/${_kernver}/modules.alias
+ /usr/lib/modules/${_kernver}/modules.alias.bin
+ /usr/lib/modules/${_kernver}/modules.devname"
+
+_arch=
+case "$XBPS_TARGET_MACHINE" in
+	arm*) _arch=arm ;;
+	aarch64*) _arch=arm64 ;;
+esac
+
+_cross=
+if [ "$CROSS_BUILD" ]; then
+	_cross="CROSS_COMPILE=${XBPS_CROSS_TRIPLET}-"
+fi
+
+pre_configure() {
+	# Remove .git directory, otherwise scripts/setkernelversion.sh
+	# modifies KERNELRELEASE and appends + to it.
+	rm -rf .git
+}
+
+do_configure() {
+	local arch target defconfig
+
+	case "$XBPS_TARGET_MACHINE" in
+		i686*) arch=i386;;
+		x86_64*) arch=x86_64;;
+		armv5*|armv7*) arch=arm;;
+		aarch64*) arch=arm64;;
+	esac
+
+	if [ -f ${FILESDIR}/${arch}-dotconfig-custom ]; then
+		msg_normal "Detected a custom .config file for your arch, using it.\n"
+		cp -f ${FILESDIR}/${arch}-dotconfig-custom .config
+		make ${makejobs} ${_cross} ARCH=$arch ${_args} oldconfig
+	elif [ -f ${FILESDIR}/${arch}-dotconfig ]; then
+		msg_normal "Detected a .config file for your arch, using it.\n"
+		cp -f ${FILESDIR}/${arch}-dotconfig .config
+		make ${makejobs} ${_cross} ARCH=$arch ${_args} oldconfig
+	elif [ -f ${FILESDIR}/${XBPS_TARGET_MACHINE%%-musl}-dotconfig ]; then
+		msg_normal "Detected a .config file for your cpu family, using it.\n"
+		cp -f ${FILESDIR}/${XBPS_TARGET_MACHINE%%-musl}-dotconfig .config
+		make ${makejobs} ${_cross} ARCH=$arch ${_args} oldconfig
+	else
+		defconfig="arch/${_arch}/configs/${target}"
+		echo "CONFIG_CONNECTOR=y" >> "$defconfig"
+		echo "CONFIG_PROC_EVENTS=y" >> "$defconfig"
+		echo "CONFIG_F2FS_FS_SECURITY=y" >> "$defconfig"
+		echo "CONFIG_CGROUP_PIDS=y" >> "$defconfig"
+		# IR Remote Support
+		echo "CONFIG_RC_CORE=y" >> "$defconfig"
+		echo "CONFIG_LIRC=y" >> "$defconfig"
+		echo "CONFIG_RC_DECODERS=y" >> "$defconfig"
+		echo "CONFIG_RC_DEVICES=y" >> "$defconfig"
+		echo "CONFIG_IR_RC6_DECODER=m" >> "$defconfig"
+		echo "CONFIG_IR_MCEUSB=m" >> "$defconfig"
+		msg_normal "Defaulting to 'bcm2711_defconfig'.\n"
+		make ${makejobs} ${_cross} ARCH=${_arch} bcm2711_defconfig
+	fi
+
+	# Always use our revision to CONFIG_LOCALVERSION to match our pkg version.
+	vsed -i -e "s|^\(CONFIG_LOCALVERSION=\).*|\1\"_${revision}\"|" .config
+}
+
+do_build() {
+	local target
+
+	case "$XBPS_TARGET_MACHINE" in
+		arm*)
+			target="zImage modules dtbs"
+			;;
+		aarch64*)
+			target="Image modules dtbs"
+			;;
+	esac
+
+	make ${makejobs} ${_cross} ARCH=${_arch} prepare
+	make ${makejobs} ${_cross} ARCH=${_arch} ${target}
+}
+
+do_install() {
+	local hdrdest
+
+	# Run depmod after compressing modules.
+	sed -i '2iexit 0' scripts/depmod.sh
+
+	# Install kernel, firmware and modules
+	make ${makejobs} ${_cross} ARCH=${_arch} INSTALL_MOD_PATH=${DESTDIR} modules_install
+
+	# Install device tree blobs
+	make ${makejobs} ${_cross} ARCH=${_arch} INSTALL_DTBS_PATH=${DESTDIR}/boot dtbs_install
+
+	#move rpi4's dtb that ended up in /boot/broadcom
+	case "$XBPS_TARGET_MACHINE" in
+	aarch64*)
+		mv ${DESTDIR}/boot/broadcom/bcm2711-rpi-4-b.dtb ${DESTDIR}/boot
+		;;
+	esac
+
+	vmkdir boot
+	# Generate kernel.img and install it to destdir.
+	case "$XBPS_TARGET_MACHINE" in
+	aarch64*)
+		vinstall arch/arm64/boot/Image 644 boot vmlinux-${_kernver}
+		;;
+	armv7l*)
+		vinstall arch/arm64/boot/zImage 644 boot vmlinuz-${_kernver}
+		;;
+	esac
+
+	hdrdest=${DESTDIR}/usr/src/${sourcepkg}-headers-${_kernver}
+
+	# Switch to /usr.
+	vmkdir usr
+	mv ${DESTDIR}/lib ${DESTDIR}/usr
+
+	cd ${DESTDIR}/usr/lib/modules/${_kernver}
+	rm -f source build
+	ln -sf ../../../src/${sourcepkg}-headers-${_kernver} build
+
+	cd ${wrksrc}
+	# Install required headers to build external modules
+	install -Dm644 Makefile ${hdrdest}/Makefile
+	install -Dm644 kernel/Makefile ${hdrdest}/kernel/Makefile
+	install -Dm644 .config ${hdrdest}/.config
+	for file in $(find . -name Kconfig\*); do
+		mkdir -p ${hdrdest}/$(dirname $file)
+		install -Dm644 $file ${hdrdest}/${file}
+	done
+	for file in $(find arch/${_arch} -name module.lds -o -name Kbuild.platforms -o -name Platform); do
+		mkdir -p ${hdrdest}/$(dirname $file)
+		install -Dm644 $file ${hdrdest}/${file}
+	done
+	mkdir -p ${hdrdest}/include
+
+	# Remove firmware stuff provided by the "linux-firmware" pkg.
+	rm -rf ${DESTDIR}/usr/lib/firmware
+
+	for i in acpi asm-generic clocksource config crypto drm generated linux \
+		math-emu media net pcmcia scsi sound trace uapi video xen; do
+		[ -d include/$i ] && cp -a include/$i ${hdrdest}/include
+	done
+
+	cd ${wrksrc}
+	# Remove helper binaries built for host,
+	# if generated files from the scripts/ directory need to be included,
+	# they need to be copied to ${hdrdest} before this step
+	if [ "$CROSS_BUILD" ]; then
+		make ${makejobs} ${_cross} ARCH=${_arch} _mrproper_scripts
+		# remove host specific objects as well
+		find scripts -name '*.o' -delete
+	fi
+
+	# Copy files necessary for later builds.
+	cp Module.symvers ${hdrdest}
+	cp -a scripts ${hdrdest}
+	mkdir -p ${hdrdest}/security/selinux
+	cp -a security/selinux/include ${hdrdest}/security/selinux
+	mkdir -p ${hdrdest}/tools/include
+	cp -a tools/include/tools ${hdrdest}/tools/include
+
+	# copy arch includes for external modules
+	mkdir -p ${hdrdest}/arch/${_arch}
+	cp -a arch/${_arch}/include ${hdrdest}/arch/${_arch}
+
+	mkdir -p ${hdrdest}/arch/${_arch}/kernel
+	cp arch/${_arch}/Makefile ${hdrdest}/arch/${_arch}
+	cp arch/${_arch}/kernel/asm-offsets.s ${hdrdest}/arch/${_arch}/kernel
+	if [ "$_arch" = "arm64" ] ; then
+		cp -a arch/${_arch}/kernel/vdso ${hdrdest}/arch/${_arch}/kernel/
+	fi
+
+	# Add md headers
+	mkdir -p ${hdrdest}/drivers/md
+	cp drivers/md/*.h ${hdrdest}/drivers/md
+
+	# Add inotify.h
+	mkdir -p ${hdrdest}/include/linux
+	cp include/linux/inotify.h ${hdrdest}/include/linux
+
+	# Add wireless headers
+	mkdir -p ${hdrdest}/net/mac80211/
+	cp net/mac80211/*.h ${hdrdest}/net/mac80211
+
+	# add dvb headers for external modules
+	mkdir -p ${hdrdest}/include/config/dvb/
+	cp include/config/dvb/*.h ${hdrdest}/include/config/dvb/
+
+	# Remove unneeded architectures
+	# (save the correct one + Kconfig and delete all others)
+	mkdir -p arch-backup
+	cp -r ${hdrdest}/arch/${_arch} ${hdrdest}/arch/Kconfig arch-backup/
+	rm -rf ${hdrdest}/arch
+	mv arch-backup ${hdrdest}/arch
+	# Keep arch/x86/ras/Kconfig as it is needed by drivers/ras/Kconfig
+	mkdir -p ${hdrdest}/arch/x86/ras
+	cp -a arch/x86/ras/Kconfig ${hdrdest}/arch/x86/ras/Kconfig
+
+	# Extract debugging symbols
+	msg_normal "$pkgver: extracting debug info, please wait...\n"
+	install -Dm644 vmlinux ${DESTDIR}/usr/lib/debug/boot/vmlinux-${_kernver}
+	(
+	cd ${DESTDIR}
+	export DESTDIR
+	find ./ -name '*.ko' -print0 | \
+		xargs -0r -n1 -P ${XBPS_MAKEJOBS} ${FILESDIR}/mv-debug
+	)
+
+	# ... and run depmod again.
+	depmod -b ${DESTDIR}/usr -F System.map ${_kernver}
+}
+
+rpi4-linux4.19-headers_package() {
+	nostrip=yes
+	noverifyrdeps=yes
+	noshlibprovides=yes
+	short_desc="The Linux kernel headers for Raspberry Pi 4 (${version%.*} series [git ${_gitshort}])"
+	pkg_install() {
+		vmove usr/src
+		vmove usr/lib/modules/${_kernver}/build
+	}
+}
+rpi4-linux4.19-dbg_package() {
+	preserve=yes
+	nostrip=yes
+	noverifyrdeps=yes
+	noshlibprovides=yes
+	repository=debug
+	short_desc+=" - debugging symbols"
+	pkg_install() {
+		vmove usr/lib/debug
+	}
+}
