@@ -1,0 +1,14 @@
+--- libelftc/make-toolchain-version.orig
++++ libelftc/make-toolchain-version
+@@ -78,11 +78,6 @@
+     fi
+ fi
+ 
+-if [ -z "${versionstring}" ]; then
+-    echo "ERROR: cannot determine a revision number." 1>&2
+-    exit 1
+-fi
+-
+ cd ${curdir} || usage "Cannot change back to ${curdir}."
+ 
+ #

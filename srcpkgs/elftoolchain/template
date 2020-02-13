@@ -1,0 +1,34 @@
+# Template file for 'elftoolchain'
+pkgname=elftoolchain
+version=0.7.1
+revision=1
+hostmakedepends="bmake m4 groff bison flex python python-yaml"
+makedepends="libarchive-devel"
+depends=""
+short_desc="BSD licensed ELF toolchain"
+maintainer="Duncaen <duncaen@voidlinux.org>"
+license="BSD"
+homepage="https://sourceforge.net/p/elftoolchain/wiki/Home/"
+distfiles="${SOURCEFORGE_SITE}/$pkgname/Sources/${pkgname}-${version}/${pkgname}-${version}.tar.bz2
+ http://tetworks.opengroup.org/downloads/38/software/Sources/3.8/tet3.8-src.tar.gz"
+checksum="44f14591fcf21294387215dd7562f3fb4bec2f42f476cf32420a6bbabb2bd2b5
+ 5b252a4b578f8893d4005169bfa6dc5ed7a7335a25159a88e068b866ca86a7c8"
+
+nocross=yes
+
+case "$XBPS_TARGET_MACHINE" in
+	*-musl) makedepends+=" musl-legacy-compat"
+esac
+
+post_extract() {
+	mv ../tet3.8 test/tet
+}
+
+do_build() {
+	YACC=bison-yacc LEX=flex bmake ${makejobs} WITH_TESTS=no
+	bmake test
+}
+
+do_install() {
+	bmake MK_INSTALL_AS_USER=yes DESTDIR=${DESTDIR} install
+}
