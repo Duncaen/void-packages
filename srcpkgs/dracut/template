@@ -47,16 +47,6 @@ post_install() {
 	vinstall ${FILESDIR}/kernel-hook-postinst 755 usr/libexec/dracut
 	vinstall ${FILESDIR}/kernel-hook-postrm 755 usr/libexec/dracut
 
-	# We don't need the systemd stuff.
-	rm -r ${DESTDIR}/usr/lib/dracut/modules.d/*systemd*
-
-	# systemd dependent additional dracut modules
-	for f in 06rngd 06dbus-broker 06dbus-daemon 09dbus \
-		35connman 35network-manager 35network-wicked 80lvmmerge \
-		99memstrack 99squash; do
-		rm -r ${DESTDIR}/usr/lib/dracut/modules.d/${f}
-	done
-
 	# don't need s390x architecture dependent dracut modules
 	for f in 80cms 81cio_ignore 91zipl 95dasd 95dasd_mod \
 		95dasd_rules 95dcssblk 95qeth_rules 95zfcp \
@@ -92,5 +82,17 @@ dracut-uefi_package() {
 		vinstall ${FILESDIR}/dracut-uefi-hook.confd 644 etc/default dracut-uefi-hook
 		vinstall ${FILESDIR}/kernel-uefi-hook-postinst 755 etc/kernel.d/post-install 20-dracut-uefi
 		vinstall ${FILESDIR}/kernel-uefi-hook-postrm 755 etc/kernel.d/post-remove 20-dracut-uefi
+	}
+}
+
+darcut-systemd_package() {
+	short_desc+=" - systemd modules"
+	pkg_install() {
+		vmove "usr/lib/dracut/modules.d/*systemd*"
+		for f in 06rngd 06dbus-broker 06dbus-daemon 09dbus \
+			35connman 35network-manager 35network-wicked 80lvmmerge \
+			99memstrack 99squash; do
+			vmove "usr/lib/dracut/modules.d/${f}"
+		done
 	}
 }
