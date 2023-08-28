@@ -4,7 +4,7 @@ version=0.14
 revision=1
 build_style=meson
 hostmakedepends="pkg-config xxd"
-makedepends="dbus-devel libcap-devel"
+makedepends="dbus-devel libcap-devel $(vopt_if systemd libsystemd-devel)"
 depends="dbus"
 short_desc="Realtime Policy and Watchdog Daemon"
 maintainer="Orphaned <orphan@voidlinux.org>"
@@ -13,6 +13,7 @@ homepage="https://gitlab.freedesktop.org/pipewire/rtkit"
 distfiles="https://gitlab.freedesktop.org/pipewire/rtkit/-/archive/v${version}/rtkit-v${version}.tar.gz"
 checksum=55dd379b11f52b81655e2dc676de9d602d050cb0beb18ef01f0f65569f0a5e59
 
+build_options="systemd"
 system_accounts="rtkit"
 rtkit_homedir="/proc"
 
