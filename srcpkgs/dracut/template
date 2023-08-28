@@ -19,7 +19,7 @@ alternatives="
  initramfs:/etc/kernel.d/post-install/20-initramfs:/usr/libexec/dracut/kernel-hook-postinst
  initramfs:/etc/kernel.d/post-remove/20-initramfs:/usr/libexec/dracut/kernel-hook-postrm
 "
-subpackages="dracut-network"
+subpackages="dracut-network dracut-systemd"
 # Checks require distfiles come from a git repository
 make_check=no
 
@@ -85,7 +85,7 @@ dracut-uefi_package() {
 	}
 }
 
-darcut-systemd_package() {
+dracut-systemd_package() {
 	short_desc+=" - systemd modules"
 	pkg_install() {
 		vmove "usr/lib/dracut/modules.d/*systemd*"
