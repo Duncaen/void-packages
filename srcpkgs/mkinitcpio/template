@@ -22,13 +22,6 @@ replaces="mkinitcpio-udev>=0"
 make_dirs="/etc/mkinitcpio.conf.d 0755 root root"
 
 post_install() {
-	# Remove unneeded systemd bits
-	rm -r ${DESTDIR}/usr/lib/kernel
-	rm -r ${DESTDIR}/usr/lib/systemd
-	rm -r ${DESTDIR}/usr/lib/initcpio/install/sd*
-	rm -r ${DESTDIR}/usr/lib/initcpio/install/systemd
-	rm -r ${DESTDIR}/usr/lib/tmpfiles.d
-
 	# Remove patch remnants
 	rm "${DESTDIR}"/usr/lib/initcpio/{hooks,install}/*.orig
 
@@ -81,5 +74,18 @@ mkinitcpio-zfs_package() {
 	pkg_install() {
 		vinstall ${FILESDIR}/zfs_hook 644 usr/lib/initcpio/hooks zfs
 		vinstall ${FILESDIR}/zfs_install 644 usr/lib/initcpio/install zfs
+	}
+}
+
+mkinitcpio-systemd_package() {
+	depends="${sourcepkg}>=${version}_${revision} systemd"
+	short_desc+=" - ZFS support"
+	pkg_install() {
+		vinstall ${FILESDIR}/systemd_install 644 usr/lib/initcpio/install systemd
+		vmove usr/lib/kernel
+		vmove usr/lib/systemd
+		vmove usr/lib/initcpio/install/sd*
+		vmove usr/lib/initcpio/install/systemd
+		vmove usr/lib/tmpfiles.d
 	}
 }
