@@ -4,9 +4,9 @@ version=46.1
 revision=1
 build_style=gnu-configure
 configure_args="--with-pam-dir=/usr/lib/security --disable-schemas-compile
- --enable-ssh-agent"
+ --enable-ssh-agent $(vopt_enable systemd)"
 hostmakedepends="pkg-config glib-devel openssh docbook-xsl libxslt"
-makedepends="gcr-devel pam-devel"
+makedepends="gcr-devel pam-devel $(vopt_if systemd libsystemd-devel)"
 depends="dconf"
 checkdepends="dbus xvfb-run"
 short_desc="GNOME password and secret manager"
@@ -19,3 +19,5 @@ checksum=b1d3ae9132ff2f8b3f25a190790892968e3d0acf952a487e40f644a8550ce3f6
 lib32disabled=yes
 make_check_pre="dbus-run-session xvfb-run"
 make_check=ci-skip # times out
+
+build_options="systemd"
