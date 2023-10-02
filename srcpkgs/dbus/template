@@ -5,11 +5,11 @@ revision=1
 build_style=gnu-configure
 configure_args="--disable-selinux --enable-inotify --with-dbus-user=dbus
  --enable-xml-docs --enable-epoll
- --disable-asserts --disable-systemd --disable-user-session
+ --disable-asserts $(vopt_enable systemd) $(vopt_if systemd --enable-user-session --disable-user-session)
  --with-system-socket=/run/dbus/system_bus_socket --disable-doxygen-docs
  --with-system-pid-file=/run/dbus/pid --with-console-auth-dir=/run/console"
 hostmakedepends="gperf gettext pkg-config xmlto"
-makedepends="expat-devel libX11-devel libcap-devel"
+makedepends="expat-devel libX11-devel libcap-devel $(vopt_if systemd libsystemd-devel)"
 short_desc="Message bus system"
 maintainer="Orphaned <orphan@voidlinux.org>"
 license="GPL-2.0-or-later"
@@ -22,6 +22,8 @@ conf_files="/etc/dbus-1/*.conf"
 
 # Create dbus:22 system account.
 system_accounts="dbus:22"
+
+build_options="systemd"
 
 post_install() {
 	vsv dbus
