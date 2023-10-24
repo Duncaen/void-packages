@@ -18,7 +18,8 @@ hostmakedepends="bubblewrap gettext glib-devel libxslt pkg-config bison
  python3-parsing xmlto docbook-xml docbook-xsl xdg-dbus-proxy polkit-devel"
 makedepends="AppStream-devel libarchive-devel gpgme-devel json-glib-devel
  libcap-devel libostree-devel libseccomp-devel polkit-devel dconf-devel
- fuse3-devel libcurl-devel libxml2-devel gdk-pixbuf-devel"
+ fuse3-devel libcurl-devel libxml2-devel gdk-pixbuf-devel
+ $(vopt_if systemd libsystemd-devel)"
 depends="bubblewrap gnupg>=2 xdg-dbus-proxy"
 checkdepends="attr-progs bubblewrap dbus gnupg socat which xdg-dbus-proxy"
 short_desc="Application sandboxing and distribution framework"
@@ -29,7 +30,7 @@ changelog="https://github.com/flatpak/flatpak/raw/main/NEWS"
 distfiles="https://github.com/flatpak/flatpak/releases/download/${version}/flatpak-${version}.tar.xz"
 checksum=b899a7a00c48d2c626cb8ec33fe556720b376c25805d7222430c0fdca4c6ac8d
 
-build_options="gir"
+build_options="gir systemd"
 build_options_default="gir"
 
 system_accounts="_flatpak"
@@ -40,10 +41,6 @@ fi
 
 post_patch() {
 	vsed -i -e '/cp.*usr.lib.locale.C/d' tests/make-test-runtime.sh
-}
-
-post_install() {
-	rm -rf $DESTDIR/usr/lib/systemd
 }
 
 flatpak-devel_package() {
