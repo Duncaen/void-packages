@@ -3,10 +3,12 @@ pkgname=seatd
 version=0.8.0
 revision=1
 build_style=meson
-configure_args="-Dexamples=disabled $(vopt_if elogind -Dlibseat-logind=elogind)
+configure_args="-Dexamples=disabled
+ $(vopt_if elogind -Dlibseat-logind=elogind)
+ $(vopt_if systemd -Dlibseat-logind=systemd)
  -Dwerror=false"
 hostmakedepends="pkg-config scdoc"
-makedepends="$(vopt_if elogind elogind-devel)"
+makedepends="$(vopt_if elogind elogind-devel) $(vopt_if systemd libsystemd-devel)"
 short_desc="Minimal seat management daemon"
 maintainer="Andrew J. Hesford <ajh@sideband.org>"
 license="MIT"
@@ -15,8 +17,10 @@ distfiles="https://git.sr.ht/~kennylevinsen/seatd/archive/${version}.tar.gz"
 checksum=a562a44ee33ccb20954a1c1ec9a90ecb2db7a07ad6b18d0ac904328efbcf65a0
 system_groups=_seatd
 
-build_options="elogind"
+build_options="elogind systemd"
 build_options_default="elogind"
+
+vopt_conflict elogind systemd
 
 post_install() {
 	vlicense LICENSE
