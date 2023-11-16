@@ -5,7 +5,7 @@ revision=1
 build_style=meson
 configure_args="-Dc_args=-Wno-error"
 hostmakedepends="pkg-config wayland-devel scdoc"
-makedepends="wayland-devel wayland-protocols elogind-devel pipewire-devel
+makedepends="wayland-devel wayland-protocols $(vopt_if systemd libsystemd-devel elogind-devel) pipewire-devel
  inih-devel libgbm-devel libdrm-devel"
 depends="xdg-desktop-portal"
 short_desc="Backend of xdg-desktop-portal for wlroots"
@@ -14,6 +14,8 @@ license="MIT"
 homepage="https://github.com/emersion/xdg-desktop-portal-wlr"
 distfiles="https://github.com/emersion/xdg-desktop-portal-wlr/archive/v${version}.tar.gz"
 checksum=4a789d4f814c33a689a3f30c21946c8a6b74beb8538602caec20e48cad10ad50
+
+build_options="systemd"
 
 post_install() {
 	vlicense LICENSE
