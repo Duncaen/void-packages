@@ -56,9 +56,6 @@ post_install() {
 
 	# ifcfg network-scripts dependent (RHEL-derived)
 	rm -r ${DESTDIR}/usr/lib/dracut/modules.d/45ifcfg
-
-	rm ${DESTDIR}/usr/share/man/man8/*.service.*
-	rm -r ${DESTDIR}/usr/lib/kernel
 }
 
 dracut-network_package() {
@@ -88,7 +85,9 @@ dracut-uefi_package() {
 dracut-systemd_package() {
 	short_desc+=" - systemd modules"
 	pkg_install() {
+		vmove usr/lib/kernel
 		vmove "usr/lib/dracut/modules.d/*systemd*"
+		vmove "usr/share/man/man8/*.service.*"
 		for f in 06rngd 06dbus-broker 06dbus-daemon 09dbus \
 			35connman 35network-manager 35network-wicked 80lvmmerge \
 			99memstrack 99squash; do
