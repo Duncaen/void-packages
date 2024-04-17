@@ -3,13 +3,13 @@ pkgname=bluez
 version=5.78
 revision=1
 build_style=gnu-configure
-configure_args="--with-udevdir=/usr/lib/udev --disable-systemd
+configure_args="--with-udevdir=/usr/lib/udev $(vopt_enable systemd)
  --enable-sixaxis --enable-threads --enable-library --enable-deprecated
  --enable-external-ell --enable-mesh --enable-nfc --enable-experimental
  --enable-hid2hci"
 hostmakedepends="automake flex libtool pkg-config python3-docutils"
 makedepends="cups-devel eudev-libudev-devel libglib-devel libical-devel
- readline-devel ell-devel json-c-devel"
+ readline-devel ell-devel json-c-devel $(vopt_if systemd libsystemd-devel)"
 short_desc="Bluetooth tools and daemons"
 maintainer="Érico Nogueira <ericonr@disroot.org>"
 license="GPL-2.0-or-later, LGPL-2.1-or-later"
@@ -19,6 +19,8 @@ distfiles="${KERNEL_SITE}/bluetooth/bluez-${version}.tar.xz"
 checksum=830fed1915c5d375b8de0f5e6f45fcdea0dcc5ff5ffb3d31db6ed0f00d73c5e3
 conf_files="/etc/bluetooth/main.conf"
 system_groups="bluetooth"
+
+build_options="systemd"
 
 if [ "$XBPS_TARGET_LIBC" = musl ]; then
 	makedepends+=" musl-legacy-compat"
