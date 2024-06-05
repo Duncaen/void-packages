@@ -4,9 +4,11 @@ version=0.5.5
 revision=1
 build_style=meson
 build_helper=gir
-configure_args="-Dintrospection=enabled -Dsystem-lua=true"
+configure_args="-Dintrospection=enabled -Dsystem-lua=true
+ $(vopt_feature systemd)"
 hostmakedepends="pkg-config glib-devel python3-lxml doxygen gettext"
-makedepends="libglib-devel pipewire-devel lua54-devel elogind-devel"
+makedepends="libglib-devel pipewire-devel lua54-devel
+ $(vopt_if systemd libsystemd-devel elogind-devel)"
 checkdepends="pipewire dbus"
 short_desc="Session and policy manager implementation for PipeWire"
 maintainer="Érico Nogueira <ericonr@disroot.org>"
@@ -16,6 +18,8 @@ changelog="https://gitlab.freedesktop.org/pipewire/wireplumber/-/raw/master/NEWS
 distfiles="https://gitlab.freedesktop.org/pipewire/wireplumber/-/archive/$version/wireplumber-$version.tar.gz"
 checksum=49075cd5c2f4820839a9e69d4a22386bc280c62b92c153af9be39ca439d45a09
 provides="pipewire-session-manager-0_1"
+
+build_options="systemd"
 
 post_install() {
 	vlicense LICENSE
