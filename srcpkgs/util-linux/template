@@ -59,6 +59,11 @@ post_extract() {
 		# Known broken
 		rm -f tests/ts/col/multibyte
 	fi
+
+	vsed -e 's/User=uuidd/User=_uuidd/g' \
+		-e 's/Group=uuidd/Group=_uuidd/g' \
+		-i misc-utils/uuidd.service.in
+	vsed -e 's/uuidd uuidd/_uuidd _uuidd/g' -i misc-utils/uuidd-tmpfiles.conf.in
 }
 
 do_install() {
