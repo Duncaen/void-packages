@@ -1,6 +1,6 @@
 # Template file for 'dracut-ng'
 pkgname=dracut-ng
-version=103
+version=104
 revision=1
 build_style=configure
 configure_args="
@@ -16,7 +16,7 @@ license="GPL-2.0-or-later"
 homepage="https://github.com/dracut-ng/dracut-ng"
 changelog="https://raw.githubusercontent.com/dracut-ng/dracut-ng/master/NEWS.md"
 distfiles="https://github.com/dracut-ng/dracut-ng/archive/refs/tags/${version}.tar.gz"
-checksum=9a92b4f0643926a65162171d68b9525fc93e6e82f455a4b3938db385a841bda8
+checksum=d5d4b8a4d8bb38bf88584937c0c487aa19849698a67caed608e893b148be9798
 
 if [ "$XBPS_TARGET_LIBC" = "musl" ]; then
 	makedepends+=" musl-fts-devel"
@@ -49,9 +49,6 @@ post_install() {
 	for f in 80cms 81cio_ignore 91zipl 95dasd 95dasd_mod 95dcssblk 95zfcp 95znet; do
 		rm -r "${DESTDIR}/usr/lib/dracut/modules.d/${f}"
 	done
-
-	# ifcfg network-scripts dependent (RHEL-derived)
-	rm -r "${DESTDIR}/usr/lib/dracut/modules.d/45ifcfg"
 }
 
 dracut-ng-network_package() {
