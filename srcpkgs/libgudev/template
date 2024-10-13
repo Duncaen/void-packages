@@ -6,7 +6,7 @@ build_style=meson
 build_helper="gir"
 configure_args="$(vopt_feature gir introspection) $(vopt_feature vala vapi)"
 hostmakedepends="pkg-config glib-devel $(vopt_if vala vala)"
-makedepends="libglib-devel eudev-libudev-devel"
+makedepends="libglib-devel $(vopt_if systemd systemd-libudev-devel eudev-libudev-devel)"
 short_desc="Library providing GObject bindings for libudev"
 maintainer="Enno Boland <gottox@voidlinux.org>"
 license="LGPL-2.1-or-later"
@@ -15,7 +15,7 @@ changelog="https://gitlab.gnome.org/GNOME/libgudev/-/raw/master/NEWS"
 distfiles="${GNOME_SITE}/libgudev/${version}/libgudev-${version}.tar.xz"
 checksum=61266ab1afc9d73dbc60a8b2af73e99d2fdff47d99544d085760e4fa667b5dd1
 
-build_options="gir vala"
+build_options="gir vala systemd"
 build_options_default="gir"
 
 replaces="eudev-libgudev>=0"
