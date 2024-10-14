@@ -1,6 +1,6 @@
 # Template file for 'dracut-ng'
 pkgname=dracut-ng
-version=104
+version=105
 revision=1
 build_style=configure
 configure_args="
@@ -16,7 +16,7 @@ license="GPL-2.0-or-later"
 homepage="https://github.com/dracut-ng/dracut-ng"
 changelog="https://raw.githubusercontent.com/dracut-ng/dracut-ng/master/NEWS.md"
 distfiles="https://github.com/dracut-ng/dracut-ng/archive/refs/tags/${version}.tar.gz"
-checksum=d5d4b8a4d8bb38bf88584937c0c487aa19849698a67caed608e893b148be9798
+checksum=a5f94012873f589e2efc3659341f5e383ec90419f5c361a6fd3561f946133f69
 
 if [ "$XBPS_TARGET_LIBC" = "musl" ]; then
 	makedepends+=" musl-fts-devel"
