@@ -5,9 +5,10 @@ revision=3
 build_style=meson
 build_helper="gir"
 configure_args="-Dsystemdsystemunitdir=no -Duser_heuristics=false
- $(vopt_bool gir introspection) $(vopt_bool elogind elogind)"
+ $(vopt_bool gir introspection) $(vopt_bool elogind elogind)
+ $(vopt_bool systemd)"
 hostmakedepends="glib-devel pkg-config polkit gettext"
-makedepends="polkit-devel $(vopt_if elogind elogind-devel)"
+makedepends="polkit-devel $(vopt_if systemd libsystemd-devel) $(vopt_if elogind elogind-devel)"
 short_desc="D-Bus interfaces for querying and manipulating user account information"
 maintainer="Enno Boland <gottox@voidlinux.org>"
 license="GPL-3.0-or-later"
@@ -23,7 +24,7 @@ if [ "$XBPS_TARGET_LIBC" = "glibc" ]; then
 fi
 
 # Package build options
-build_options="elogind gir"
+build_options="elogind gir systemd"
 build_options_default="elogind gir"
 
 accountsservice-devel_package() {
