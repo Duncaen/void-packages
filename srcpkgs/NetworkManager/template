@@ -4,9 +4,9 @@ version=1.48.10
 revision=1
 build_style=meson
 build_helper="gir qemu"
-configure_args="-Dsystemd_journal=false
+configure_args="$(vopt_bool systemd systemd_journal)
  -Dlibaudit=no -Dovs=false -Dselinux=false
- -Dmodify_system=true -Dsystemdsystemunitdir=no
+ -Dmodify_system=true $(vopt_bool systemd systemdsystemunitdir)
  -Dpppd=/usr/bin/pppd -Dqt=false
  -Dsession_tracking_consolekit=false
  -Dresolvconf=/usr/bin/resolvconf
@@ -15,8 +15,7 @@ configure_args="-Dsystemd_journal=false
  -Ddhcpcd=/usr/bin/dhcpcd -Diptables=/usr/bin/iptables -Dnft=/usr/bin/nft
  -Diwd=true -Dudev_dir=/usr/lib/udev -Ddocs=true
  $(vopt_bool gir introspection) $(vopt_bool gir vapi)
- -Dsession_tracking=$(vopt_if elogind elogind no)
- -Dsuspend_resume=$(vopt_if elogind elogind upower)
+ $(vopt_if systemd -Dsession_tracking=systemd -Dsuspend_resume=systemd)
  -Dconfig_dhcp_default=internal"
 hostmakedepends="gettext-devel glib-devel libxslt-devel pkg-config
  dbus-glib-devel docbook-xsl gtk-doc polkit-devel perl
@@ -24,10 +23,10 @@ hostmakedepends="gettext-devel glib-devel libxslt-devel pkg-config
 makedepends="libuuid-devel nss-devel dbus-glib-devel libgudev-devel
  libnl3-devel polkit-devel ppp-devel libcurl-devel
  ModemManager-devel readline-devel libndp-devel newt-devel jansson-devel
- libpsl-devel eudev-libudev-devel mobile-broadband-provider-info gnutls-devel
+ libpsl-devel mobile-broadband-provider-info gnutls-devel
  $(vopt_if gir 'libgirepository-devel python3-gobject')
- $(vopt_if elogind elogind-devel)"
-depends="dbus iproute2 openresolv wpa_supplicant mobile-broadband-provider-info"
+ $(vopt_if systemd libsystemd-devel systemd-libudev systemd-libudev-devel)"
+depends="dbus iproute2 $(vopt_if openresolv openresolv systemd-resolved) wpa_supplicant mobile-broadband-provider-info"
 checkdepends="python3-dbus"
 short_desc="Network Management daemon"
 maintainer="Enno Boland <gottox@voidlinux.org>"
@@ -49,8 +48,8 @@ make_dirs="
 "
 
 # Package build options
-build_options="gir elogind"
-build_options_default="gir elogind"
+build_options="gir elogind openresolv systemd"
+build_options_default="gir openresolv"
 
 post_patch() {
 	if [ "$CROSS_BUILD" ]; then

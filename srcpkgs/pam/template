@@ -72,3 +72,11 @@ pam-userdb_package() {
 		vmove usr/share/man/man8/pam_userdb.8
 	}
 }
+
+pam-systemd_package() {
+	depends="pam>=${version}_${revision}"
+	short_desc=" - systemd"
+	pkg_install() {
+		vmove usr/lib/systemd
+	}
+}
