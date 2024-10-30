@@ -7,7 +7,7 @@ configure_args="--prefix=/usr --sysconfdir=/etc"
 conf_files="/etc/dracut.conf"
 hostmakedepends="pkg-config ruby-asciidoctor"
 makedepends="libkmod-devel"
-depends="bash coreutils cpio eudev gzip kmod>=3.7 kpartx util-linux"
+depends="bash coreutils cpio $(vopt_if systemd systemd-udev eudev) gzip kmod>=3.7 kpartx util-linux"
 short_desc="Low-level tool for generating an initramfs/initrd image"
 maintainer="Orphaned <orphan@voidlinux.org>"
 license="GPL-2.0-or-later, LGPL-2.0-or-later"
@@ -27,6 +27,8 @@ make_dirs="
  /etc/dracut.conf.d 0755 root root
  /usr/lib/dracut/dracut.conf.d 0755 root root"
 
+build_options="systemd"
+
 if [ "$XBPS_TARGET_LIBC" = "musl" ]; then
 	makedepends+=" musl-fts-devel"
 fi
@@ -42,9 +44,10 @@ post_install() {
 	vinstall ${FILESDIR}/kernel-hook-postinst 755 usr/libexec/dracut
 	vinstall ${FILESDIR}/kernel-hook-postrm 755 usr/libexec/dracut
 
-	rm ${DESTDIR}/usr/share/man/man8/*.service.*
-	rm -r ${DESTDIR}/usr/lib/kernel
-
+	if [ -z "$build_option_systemd" ]; then
+		rm ${DESTDIR}/usr/share/man/man8/*.service.*
+		rm -r ${DESTDIR}/usr/lib/kernel
+	fi
 }
 
 dracut-network_package() {
