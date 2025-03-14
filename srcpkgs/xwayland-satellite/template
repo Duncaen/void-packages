@@ -3,6 +3,7 @@ pkgname=xwayland-satellite
 version=0.5.1
 revision=1
 build_style=cargo
+configure_args="$(vopt_if systemd '--features systemd')"
 hostmakedepends="pkg-config clang"
 makedepends="xcb-util-cursor-devel"
 depends="xorg-server-xwayland"
@@ -13,3 +14,11 @@ homepage="https://github.com/Supreeeme/xwayland-satellite"
 distfiles="https://github.com/Supreeeme/xwayland-satellite/archive/v${version}.tar.gz"
 checksum=107d4a8004b24a871c6548a7c550e9260fcbb0367bd6337ae98f1fd2f3ecf645
 make_check="ci-skip" # Some tests require a running Wayland environment
+
+build_options="systemd"
+
+post_install() {
+	vsed -e 's;/usr/local/bin/;/usr/bin/;' \
+		-i resources/xwayland-satellite.service
+	vinstall resources/xwayland-satellite.service 644 usr/lib/systemd/user
+}
