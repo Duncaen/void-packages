@@ -6,10 +6,14 @@ _container_libs_common=0.66.1
 build_style=go
 build_wrksrc=podman-${version}
 go_import_path="github.com/containers/podman/v5"
-go_package="${go_import_path}/cmd/podman ${go_import_path}/cmd/rootlessport"
-go_build_tags="seccomp apparmor containers_image_ostree_stub cni libsqlite3"
+go_package="
+ ${go_import_path}/cmd/podman
+ ${go_import_path}/cmd/rootlessport
+ $(vopt_if systemd "${go_import_path}/cmd/quadlet")"
+go_build_tags="seccomp apparmor containers_image_ostree_stub cni libsqlite3 $(vopt_if systemd systemd)"
 hostmakedepends="pkg-config go-md2man python3 mdocml"
-makedepends="gpgme-devel libseccomp-devel device-mapper-devel libbtrfs-devel sqlite-devel"
+makedepends="gpgme-devel libseccomp-devel device-mapper-devel libbtrfs-devel sqlite-devel
+ $(vopt_if systemd libsystemd-devel)"
 depends="runc conmon cni-plugins slirp4netns fuse-overlayfs containers-common
  containers.image containers.storage netavark passt"
 checkdepends="qemu"
@@ -22,6 +26,8 @@ distfiles="https://github.com/containers/podman/archive/v${version}.tar.gz
  https://github.com/containers/container-libs/archive/refs/tags/common/v${_container_libs_common}.tar.gz"
 checksum="c04c12f90d1bf410ccc4d27a30cff188d6a9361bddb5fceb19659ae08257cc6f
  d008a3cc50d6f68fe84f139081c811384223665c273a520bee174f5b9f2f48af"
+
+build_options="systemd"
 
 case $XBPS_TARGET_MACHINE in
 	aarch64* | x86_64*) ;;
@@ -50,11 +56,20 @@ post_install() {
 	make install.completions DESTDIR="${DESTDIR}" PREFIX="/usr"
 	cp ${wrksrc}/container-libs-common-v${_container_libs_common}/common/pkg/config/containers.conf \
 		containers.cgfs.conf
-	vsed -i -e 's|#cgroup_manager = "systemd"|cgroup_manager = "cgroupfs"|g' \
-		containers.cgfs.conf
+	if [ -z "$build_option_systemd" ]; then
+		vsed -i -e 's|#cgroup_manager = "systemd"|cgroup_manager = "cgroupfs"|g' \
+			containers.cgfs.conf
+	fi
 	vinstall containers.cgfs.conf 644 usr/share/containers containers.conf
 	vsv podman
 	vsv podman-docker
 	vbin podman-remote
 	ln -sf podman ${DESTDIR}/usr/bin/podmansh
+	if [ "$build_option_systemd" ]; then
+		make install.systemd DESTDIR="${DESTDIR}" PREFIX="/usr"
+		mv "${DESTDIR}/usr/bin/quadlet" "${DESTDIR}/usr/libexec/podman/quadlet"
+		mkdir -p "${DESTDIR}/usr/lib/systemd/system-generators" "${DESTDIR}/usr/lib/systemd/user-generators"
+		ln -fsr "${DESTDIR}/usr/libexec/podman/quadlet" "${DESTDIR}/usr/lib/systemd/system-generators/podman-system-generator"
+		ln -fsr "${DESTDIR}/usr/libexec/podman/quadlet" "${DESTDIR}/usr/lib/systemd/user-generators/podman-user-generator"
+	fi
 }
