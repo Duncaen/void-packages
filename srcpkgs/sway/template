@@ -18,6 +18,8 @@ changelog="https://github.com/swaywm/sway/releases"
 distfiles="https://github.com/swaywm/sway/archive/refs/tags/${version}.tar.gz"
 checksum=29ca7caac960d13e02d8213418d91a5422c7c23102a283ceab944c57c5e1efcf
 
+build_options="systemd"
+
 post_install() {
 	vlicense LICENSE
 }
