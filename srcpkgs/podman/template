@@ -4,10 +4,14 @@ version=5.6.1
 revision=1
 build_style=go
 go_import_path="github.com/containers/podman/v5"
-go_package="${go_import_path}/cmd/podman ${go_import_path}/cmd/rootlessport"
+go_package="
+ ${go_import_path}/cmd/podman
+ ${go_import_path}/cmd/rootlessport
+ $(vopt_if systemd "${go_import_path}/cmd/quadlet")"
 go_build_tags="seccomp apparmor containers_image_ostree_stub cni"
 hostmakedepends="pkg-config go-md2man python3 mdocml"
-makedepends="gpgme-devel libseccomp-devel device-mapper-devel libbtrfs-devel"
+makedepends="gpgme-devel libseccomp-devel device-mapper-devel libbtrfs-devel
+ $(vopt_if systemd libsystemd-devel)"
 depends="runc conmon cni-plugins slirp4netns fuse-overlayfs containers-common
  containers.image containers.storage netavark passt"
 checkdepends="qemu"
@@ -19,6 +23,8 @@ changelog="https://raw.githubusercontent.com/containers/podman/main/RELEASE_NOTE
 distfiles="https://github.com/containers/podman/archive/v${version}.tar.gz"
 checksum=e4fccc003dac77bae9127968c93388b6bf59d6b9ef8ffbdda21696613f729f3c
 
+build_options="systemd"
+
 if [ "$CROSS_BUILD" ]; then
 	go_build_tags+=" containers_image_openpgp"
 fi
@@ -29,6 +35,11 @@ case $XBPS_TARGET_MACHINE in
 esac
 
 post_build() {
+	# doind this manual here since we don't have per go_package go_build_tags.
+	# build instead of install since -o doesnt work with that.
+	go build -p "$XBPS_MAKEJOBS" -mod=vendor -modcacherw -v \
+		-tags "remote exclude_graphdriver_btrfs btrfs_noversion exclude_graphdriver_devicemapper containers_image_openpgp" \
+		-o podman-remote "${go_import_path}/cmd/podman"
 	make docs
 }
 
@@ -41,13 +52,30 @@ do_check() {
 post_install() {
 	vmkdir usr/libexec/podman
 	mv "${DESTDIR}/usr/bin/rootlessport" "${DESTDIR}/usr/libexec/podman/rootlessport"
+
 	make install.man DESTDIR="${DESTDIR}" PREFIX="/usr"
 	make install.completions DESTDIR="${DESTDIR}" PREFIX="/usr"
+
 	cp vendor/github.com/containers/common/pkg/config/containers.conf \
 		containers.cgfs.conf
-	vsed -i -e 's|#cgroup_manager = "systemd"|cgroup_manager = "cgroupfs"|g' \
-		containers.cgfs.conf
+
+	if [ "$build_option_systemd" ]; then
+		make install.systemd DESTDIR="${DESTDIR}" PREFIX="/usr"
+		mv "${DESTDIR}/usr/bin/quadlet" "${DESTDIR}/usr/libexec/podman/quadlet"
+		mkdir -p "${DESTDIR}/usr/lib/systemd/system-generators" "${DESTDIR}/usr/lib/systemd/user-generators"
+		ln -fsr "${DESTDIR}/usr/libexec/podman/quadlet" "${DESTDIR}/usr/lib/systemd/system-generators/podman-system-generator"
+		ln -fsr "${DESTDIR}/usr/libexec/podman/quadlet" "${DESTDIR}/usr/lib/systemd/user-generators/podman-user-generator"
+	else
+		vsed -i -e 's|#cgroup_manager = "systemd"|cgroup_manager = "cgroupfs"|g' \
+			containers.cgfs.conf
+	fi
+
+	vbin podman-remote
+
+	ln -sf podman ${DESTDIR}/usr/bin/podmansh
+
 	vinstall containers.cgfs.conf 644 usr/share/containers containers.conf
+
 	vsv podman
 	vsv podman-docker
 }
