@@ -3,7 +3,7 @@ pkgname=gnome-settings-daemon
 version=48.1
 revision=1
 build_style=meson
-configure_args="-Dsystemd=false"
+configure_args="$(vopt_bool systemd)"
 hostmakedepends="cmake docbook-xsl gettext glib-devel libglib-devel libxslt
  perl pkg-config"
 makedepends="NetworkManager-devel alsa-lib-devel colord-devel cups-devel gcr4-devel
@@ -11,9 +11,9 @@ makedepends="NetworkManager-devel alsa-lib-devel colord-devel cups-devel gcr4-de
  libgweather-devel libnotify-devel librsvg-devel libwacom-devel nss-devel
  polkit-devel pulseaudio-devel startup-notification-devel upower-devel
  xf86-input-wacom-devel libXfixes-devel gsettings-desktop-schemas-devel
- elogind-devel"
+ $(vopt_if systemd libsystemd-devel elogind-devel)"
 depends="hicolor-icon-theme"
-checkdepends="elogind libnotify python3-dbusmock python3-gobject
+checkdepends="$(vopt_if systemd systemd elogind) libnotify python3-dbusmock python3-gobject
  python3-pycodestyle which hwids eudev"
 short_desc="GNOME settings daemon"
 maintainer="Orphaned <orphan@voidlinux.org>"
@@ -27,6 +27,8 @@ CFLAGS="-UG_DISABLE_ASSERT"
 if [ "$CROSS_BUILD" ]; then
 	hostmakedepends+=" polkit"
 fi
+
+build_options="systemd"
 
 gnome-settings-daemon-devel_package() {
 	depends="libglib-devel"
