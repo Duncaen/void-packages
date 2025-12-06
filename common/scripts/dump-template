@@ -1,0 +1,240 @@
+#!/bin/bash
+# dump-template <file> - evaluate and dump templates
+
+set -eo pipefail
+
+# aliases used to implement non-exec xbps-uhelper getpkgname
+shopt -s expand_aliases
+
+msg_error() {
+	printf "ERROR: $@" >&2
+	exit 1
+}
+
+msg_warn() {
+	printf "WARN: %s" "$1"
+}
+
+vopt_if() {
+	[[ -v EVAL_BUILD_OPTIONS ]] || return 0
+	local var="build_option_$1"
+	[[ -v "$var" ]] || msg_error "unknown build option: $1\n"
+	if [[ "${!var}" ]]; then
+		printf '%s\n' "$2"
+	else
+		printf '%s\n' "${3-}"
+	fi
+}
+
+vopt_with() {
+	vopt_if "$1" "--with-${2:-$1}" "--without-${2:-$1}"
+}
+
+vopt_enable() {
+	vopt_if "$1" "--enable-${2:-$1}" "--disable-${2:-$1}"
+}
+
+vopt_bool() {
+	vopt_if "$1" "-D${2:-$1}=true" "-D${2:-$1}=false"
+}
+
+vopt_feature() {
+	vopt_if "$1" "-D${2:-$1}=enabled" "-D${2:-$1}=disabled"
+}
+
+vopt_conflict() {
+	[[ -v EVAL_BUILD_OPTIONS ]] || return 0
+	local var1="build_option_$1" var2="build_option_$2"
+	[[ -v "$var1" ]] || msg_error "unknown build option: $1\n"
+	[[ -v "$var2" ]] || msg_error "unknown build option: $2\n"
+	if [[ "${!var1}" && "${!var2}" ]]; then
+		msg_error "${basepkg}: conflicting build options enabled: $1 and $2\n"
+	fi
+}
+
+xbps_uhelper() {
+	case "$1" in
+	getpkgname) echo ${2%-*} ;;
+	*) \xbps-uhelper "$@" ;;
+	esac
+}
+alias xbps-uhelper='exit 1'
+
+read_pkg() {
+	local template="$1"
+
+	. "$template"
+
+	sourcepkg="${pkgname}"
+
+	if [[ -v build_options ]]; then
+		local opt
+		local -A opts
+		for opt in ${build_options_default}; do
+			opts[$opt]=1
+		done
+		for opt in ${build_options}; do
+			# eval with local is faster than namerefs and unset
+			eval "local build_option_${opt}=${opts[$opt]}"
+		done
+	fi
+	if [[ -v STRICT ]]; then
+		wrksrc="${XBPS_BUILDDIR}/${pkgname}-${version}_${revision}"
+		set -u
+	fi
+	EVAL_BUILD_OPTIONS=1 . "$template" || :
+	set +u
+
+	if [[ -v subpackages ]]; then
+		compgen -W "$subpackages" -V subpackages_funcs -S _package || :
+	else
+		compgen -A function -X '!*_package' -V subpackages_funcs || :
+		subpackages=$(printf '%s\n' "${subpackages[@]}")
+	fi
+}
+
+dump_subpkg() {
+	local pkgname="${1%_package}"
+
+	local -I short_desc
+
+	local conf_files mutable_files preserve triggers alternatives
+	local depends replaces provides conflicts tags metapackage
+
+	"${1}"
+
+	declare -p \
+		pkgname \
+		version \
+		revision \
+		sourcepkg \
+		short_desc \
+		depends \
+		replaces \
+		provides \
+		conflicts \
+		2>/dev/null || :
+}
+
+dump() {
+	read_pkg "$1"
+
+	declare -p \
+		pkgname \
+		version \
+		revision \
+		reverts \
+		short_desc \
+		maintainer \
+		distfiles \
+		checksum \
+		hostmakedepends \
+		makedepends \
+		checkdepends \
+		depends \
+		replaces \
+		provides \
+		build_options \
+		build_options_default \
+		2>/dev/null || :
+
+	for f in "${subpackages_funcs[@]}"; do
+		printf '\n'
+		dump_subpkg "$f"
+	done
+}
+
+export SOURCEFORGE_SITE="https://downloads.sourceforge.net/sourceforge"
+export NONGNU_SITE="https://download.savannah.nongnu.org/releases"
+export UBUNTU_SITE="http://archive.ubuntu.com/ubuntu/pool"
+export XORG_SITE="https://www.x.org/releases/individual"
+export DEBIAN_SITE="https://ftp.debian.org/debian/pool"
+export GNOME_SITE="https://download.gnome.org/sources"
+export KERNEL_SITE="https://www.kernel.org/pub/linux"
+export CPAN_SITE="https://www.cpan.org/modules/by-module"
+export PYPI_SITE="https://files.pythonhosted.org/packages/source"
+export MOZILLA_SITE="https://ftp.mozilla.org/pub"
+export GNU_SITE="https://ftp.gnu.org/gnu"
+export FREEDESKTOP_SITE="https://www.freedesktop.org/software"
+export KDE_SITE="https://download.kde.org/stable"
+export VIDEOLAN_SITE="https://download.videolan.org/pub/videolan"
+
+export XBPS_DISTFILES_FALLBACK=
+export XBPS_DISTFILES_MIRROR=
+
+export CHROOT_READY=1
+export IN_CHROOT=1
+
+export SOURCE_DATE_EPOCH=0
+
+export DESTDIR=
+
+export CC=gcc
+export CXX=c++
+export BUILD_CC=gcc
+export BUILD_CXX=c++
+
+export XBPS_BUILD_ENVIRONMENT=
+export XBPS_ALLOW_CHROOT_BREAKOUT=
+
+export XBPS_CCACHE=yes
+export XBPS_DEBUG_PKGS=yes
+export XBPS_MAKEJOBS=1
+export XBPS_ORIG_MAKEJOBS=1
+export makejobs="-j${XBPS_MAKEJOBS}"
+
+export XBPS_BUILDDIR=/builddir
+export XBPS_DESTDIR=/destdir
+export XBPS_WRAPPERDIR=/builddir/.wrappers
+export XBPS_SRCDISTDIR=/sources
+export XBPS_SRCPKGDIR=srcpkgs
+
+export XBPS_UHELPER_CMD=xbps_uhelper
+export XBPS_FETCH_CMD=xbps-fetch
+
+export XBPS_MACHINE=x86_64
+export XBPS_LIBC=glibc
+export XBPS_WORDSIZE=64
+export XBPS_ENDIAN=le
+export XBPS_NO_ATOMIC8=
+export XBPS_TRIPLET=x86_64-unknown-linux-gnu
+
+export XBPS_TARGET_MACHINE=x86_64
+export XBPS_TARGET_LIBC=glibc
+export XBPS_TARGET_WORDSIZE=64
+export XBPS_TARGET_ENDIAN=le
+export XBPS_TARGET_NO_ATOMIC8=
+export XBPS_TARGET_TRIPLET=x86_64-unknown-linux-gnu
+
+if false; then
+	export XBPS_CROSS_RUSTFLAGS=""
+	export XBPS_CROSS_RUST_TARGET=""
+else
+	export XBPS_RUSTFLAGS
+	export XBPS_RUST_TARGET="$XBPS_TRIPLET"
+fi
+export RUSTFLAGS="$XBPS_RUSTFLAGS"
+export RUST_TARGET="$XBPS_RUST_TARGET"
+export RUST_BUILD="$XBPS_RUST_TARGET"
+
+export XBPS_CROSS_TRIPLET=
+export CROSS_BUILD=
+export XBPS_CROSS_BASE=/
+export XBPS_CHECK_PKGS=
+
+
+export CFLAGS=""
+export CFLAGS_host=""
+
+py2_ver="2.7"
+py2_lib="usr/lib/python${py2_ver}"
+py2_sitelib="${py2_lib}/site-packages"
+py2_inc="usr/include/python${py2_ver}"
+
+py3_ver="3.13"
+py3_abiver=""
+py3_lib="usr/lib/python${py3_ver}"
+py3_sitelib="${py3_lib}/site-packages"
+py3_inc="usr/include/python${py3_ver}${py3_abiver}"
+
+dump "${1?missing template path}"
