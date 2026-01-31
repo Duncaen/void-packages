@@ -3,9 +3,9 @@ pkgname=tmux
 version=3.6b
 revision=1
 build_style=gnu-configure
-configure_args="--enable-utempter --enable-sixel"
+configure_args="--enable-utempter --enable-sixel $(vopt_enable systemd)"
 hostmakedepends="byacc automake pkg-config"
-makedepends="libevent-devel libutempter-devel ncurses-devel"
+makedepends="libevent-devel libutempter-devel ncurses-devel $(vopt_if systemd libsystemd-devel)"
 depends="ncurses-base"
 short_desc="Terminal Multiplexer"
 maintainer="Đoàn Trần Công Danh <congdanhqx@gmail.com>"
@@ -14,6 +14,8 @@ homepage="https://tmux.github.io"
 changelog="https://raw.githubusercontent.com/tmux/tmux/master/CHANGES"
 distfiles="https://github.com/tmux/tmux/releases/download/${version}/tmux-${version}.tar.gz"
 checksum=390759d25fdba016887ec982b808927e637070fd7d03a8021f8ef3102b9ae3c7
+
+build_options="systemd"
 
 pre_configure() {
 	autoreconf -fi
