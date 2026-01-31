@@ -3,9 +3,10 @@ pkgname=tmux
 version=3.8
 revision=1
 build_style=gnu-configure
-configure_args="--enable-optimizations --enable-utempter --enable-sixel"
+configure_args="--enable-optimizations --enable-utempter --enable-sixel
+ $(vopt_enable systemd)"
 hostmakedepends="byacc automake pkg-config"
-makedepends="libevent-devel libutempter-devel ncurses-devel"
+makedepends="libevent-devel libutempter-devel ncurses-devel $(vopt_if systemd libsystemd-devel)"
 depends="ncurses-base"
 short_desc="Terminal Multiplexer"
 maintainer="Đoàn Trần Công Danh <congdanhqx@gmail.com>"
@@ -14,6 +15,8 @@ homepage="https://tmux.github.io"
 changelog="https://raw.githubusercontent.com/tmux/tmux/master/CHANGES"
 distfiles="https://github.com/tmux/tmux/releases/download/${version}/tmux-${version}.tar.gz"
 checksum=e79c699c7e949dccd0a4a125e17b8d1261e311b16979dbc8eb34542f3966d82e
+
+build_options="systemd"
 
 pre_configure() {
 	autoreconf -fi
