@@ -11,8 +11,10 @@ homepage="https://github.com/Antynea/grub-btrfs"
 distfiles="https://github.com/Antynea/grub-btrfs/archive/${version}.tar.gz"
 checksum=c493d0d5a6548c01993641ce586c98d461cabe40df4dff79d974d0c59068ff1d
 
+build_options="systemd"
+
 post_install() {
-	rm -rf -- "${DESTDIR}"/usr/lib/systemd
+	[ "$build_option_systemd" ] || rm -vrf -- "${DESTDIR}"/usr/lib/systemd
 }
 
 grub-btrfs-runit_package() {
