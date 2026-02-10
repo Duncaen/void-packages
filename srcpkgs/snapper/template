@@ -3,7 +3,7 @@ pkgname=snapper
 version=0.13.1
 revision=2
 build_style=gnu-configure
-configure_args="--disable-zypp --disable-systemd --with-conf=/etc/conf.d"
+configure_args="--disable-zypp $(vopt_enable systemd) --with-conf=/etc/conf.d"
 conf_files="/etc/conf.d/snapper"
 make_dirs="/etc/snapper/configs 0755 root root"
 hostmakedepends="automake docbook-xsl libtool libxml2-devel libxslt
@@ -20,6 +20,8 @@ changelog="https://raw.githubusercontent.com/openSUSE/snapper/refs/tags/v${versi
 distfiles="https://github.com/openSUSE/snapper/archive/v${version}.tar.gz"
 checksum=a689ff510663eaf186df33e9a46153b4a56dc1f18a0ca505335ed2dcc9b2d4e0
 lib32disabled=yes
+
+build_options="systemd"
 
 if [ "$XBPS_TARGET_LIBC" = musl ]
 then
