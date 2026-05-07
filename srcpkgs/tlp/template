@@ -4,7 +4,7 @@ pkgname=tlp
 version=1.10.1
 revision=1
 build_style=gnu-makefile
-make_build_args="TLP_WITH_SYSTEMD=0 TLP_SBIN=/usr/bin
+make_build_args="TLP_WITH_SYSTEMD=$(vopt_if systemd 1 0) TLP_SBIN=/usr/bin
  TLP_ELOD=/usr/libexec/elogind/system-sleep"
 make_install_args="${make_build_args}"
 make_install_target="install install-man"
@@ -21,13 +21,17 @@ conflicts="laptop-mode>=0 perl-Unicode-Tussle>=0"
 conf_files="/etc/tlp.conf /etc/tlp.d/*.conf"
 make_dirs="/var/lib/tlp 0755 root root"
 
+build_options="systemd"
+
 post_install() {
 	vinstall ${FILESDIR}/tlp.resume 755 etc/zzz.d/resume 50-tlp.sh
 	vinstall ${FILESDIR}/tlp.suspend 755 etc/zzz.d/suspend 50-tlp.sh
 
-	rm ${DESTDIR}/usr/share/man/man8/*.service.8
 	rm -r ${DESTDIR}/etc/init.d
-	rm -r ${DESTDIR}/usr/lib/systemd
+	if [ -z "$build_option_systemd" ]; then
+		rm ${DESTDIR}/usr/share/man/man8/*.service.8
+		rm -r ${DESTDIR}/usr/lib/systemd
+	fi
 	vsv tlp
 }
 
