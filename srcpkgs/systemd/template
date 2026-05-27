@@ -1,6 +1,6 @@
 # Template file for 'systemd'
 pkgname=systemd
-version=260.1
+version=260.2
 revision=1
 build_helper="qemu"
 build_style=meson
@@ -179,7 +179,7 @@ license="LGPL-2.1-or-later, GPL-2.0-or-later, MIT"
 homepage="https://systemd.io/"
 changelog="https://github.com/systemd/systemd/raw/main/NEWS"
 distfiles="https://github.com/systemd/systemd/archive/refs/tags/v${version}.tar.gz"
-checksum=11b9821892b75d19af7b21f0f7f4e53636638147faf3e6a4ded78b40cb38993f
+checksum=71a9ed11cf773478b0d7a16cd96e39ca3c3939ab37ed9a8ee814c31ea9b4f2b5
 
 if [[ "$XBPS_TARGET_LIBC" == "glibc" ]]; then
 	makedepends+=" libxcrypt-devel"
