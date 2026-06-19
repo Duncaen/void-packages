@@ -1,6 +1,6 @@
 # Template file for 'systemd'
 pkgname=systemd
-version=260.2
+version=261
 revision=1
 build_helper="qemu"
 build_style=meson
@@ -141,7 +141,8 @@ makedepends="
 checkdepends="python3-pefile acl-progs"
 
 # include recommended dlopen'ed dependencies
-# readelf -p .note.dlopen /usr/lib/systemd/libsystemd-shared-259.so
+# readelf -p .note.dlopen /usr/lib/systemd/libsystemd-shared-*.so
+# readelf -p .note.dlopen /usr/lib/systemd/libsystemd-core-*.so
 depends="
  systemd-libudev
  systemd-analyze
@@ -162,16 +163,17 @@ depends="
  systemd-tmpfiles
  systemd-udev
  systemd-vconsole-setup
- $(vopt_if tpm2 tpm2-tss)
  $(vopt_if acl acl)
  $(vopt_if apparmor libapparmor)
- $(vopt_if blkid libblkid)
  $(vopt_if audit libaudit)
+ $(vopt_if blkid libblkid)
+ $(vopt_if bpf libbpf)
+ $(vopt_if cryptsetup libcryptsetup)
  $(vopt_if kmod libkmod)
- $(vopt_if seccomp libseccomp)
  $(vopt_if pam pam-libs)
- libmount
+ $(vopt_if seccomp libseccomp)
  $(vopt_if zstd libzstd)
+ libmount
  "
 short_desc="System and Service Manager"
 maintainer="Duncaen <duncaen@voidlinux.org>"
@@ -179,10 +181,11 @@ license="LGPL-2.1-or-later, GPL-2.0-or-later, MIT"
 homepage="https://systemd.io/"
 changelog="https://github.com/systemd/systemd/raw/main/NEWS"
 distfiles="https://github.com/systemd/systemd/archive/refs/tags/v${version}.tar.gz"
-checksum=71a9ed11cf773478b0d7a16cd96e39ca3c3939ab37ed9a8ee814c31ea9b4f2b5
+checksum=f1c2e6a0d19ea5cae946386eb288432de12f3c6b7730cdb0d2a06f8ab8e3f8dc
 
 if [[ "$XBPS_TARGET_LIBC" == "glibc" ]]; then
 	makedepends+=" libxcrypt-devel"
+	depends+=" libxcrypt"
 fi
 
 conflicts="dracut<060 elogind"
