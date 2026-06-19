@@ -1,6 +1,6 @@
---- a/meson.build
-+++ b/meson.build
-@@ -1821,6 +1821,7 @@
+--- a/src/bpf/meson.build
++++ b/src/bpf/meson.build
+@@ -150,6 +150,7 @@
                  'riscv64'     : ['-D__riscv', '-D__riscv_xlen=64', '-D__TARGET_ARCH_riscv'],
                  'x86'         : ['-D__i386__', '-D__TARGET_ARCH_x86'],
                  's390x'       : ['-D__s390__', '-D__s390x__', '-D__TARGET_ARCH_s390'],
