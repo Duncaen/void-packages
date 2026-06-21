@@ -1,0 +1,18 @@
+# Template file for 'varlink-http-bridge'
+pkgname=varlink-http-bridge
+version=0.0.20260621
+revision=1
+_rev=f26847e881a410fdf64d69b235e94a05da3b173d
+build_style=cargo
+hostmakedepends="pkg-config"
+makedepends="openssl-devel"
+short_desc="Bridge to make local varlink services available via http"
+maintainer="Duncaen <duncaen@voidlinux.org>"
+license="LGPL-2.1-or-later"
+homepage="https://github.com/systemd/varlink-http-bridge"
+distfiles="https://github.com/systemd/varlink-http-bridge/archive/${_rev}.tar.gz"
+checksum=0436458380741773bfe31674eb8dfadd0432beffc5eb310b3d2893145ed6623b
+
+pre_build() {
+	cargo generate-lockfile
+}
