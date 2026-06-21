@@ -61,6 +61,7 @@ make_dirs="
  /var/lib/libvirt/filesystems 0755 root root
  /var/lib/libvirt/dnsmasq 0755 root root
  /var/lib/libvirt/boot 0755 root root
+ /var/lib/libvirt/secrets 0700 root root
  /var/cache/libvirt/qemu 0755 root root"
 
 post_patch() {
