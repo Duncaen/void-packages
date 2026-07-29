@@ -4,13 +4,14 @@ version=12.6.0
 revision=1
 build_style=meson
 configure_args="-Dqemu_user=libvirt -Dqemu_group=libvirt -Drunstatedir=/run
- -Dpolkit=enabled -Dinit_script=systemd"
+ -Dpolkit=enabled $(vopt_if systemd -Dinit_script=systemd)"
 hostmakedepends="automake dnsmasq docbook-xsl gettext gettext-devel iptables
  libapparmor-devel libtool libxslt lvm2 parted perl pkg-config python3-docutils
  rpcsvc-proto"
-makedepends="readline-devel libcap-ng-devel attr-devel gnutls-devel
+makedepends="$(vopt_if systemd systemd-libudev-devel eudev-libudev-devel)
+ readline-devel libcap-ng-devel attr-devel gnutls-devel
  libsasl-devel libcurl-devel libpcap-devel libxml2-devel libparted-devel
- device-mapper-devel eudev-libudev-devel libblkid-devel libpciaccess-devel
+ device-mapper-devel libblkid-devel libpciaccess-devel
  avahi-libs-devel polkit-devel json-c-devel jansson-devel python3-devel
  libssh2-devel fuse-devel libtirpc-devel libapparmor-devel"
 depends="iptables dnsmasq"
@@ -27,6 +28,8 @@ make_check=ci-skip
 # FIX https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=701649
 system_accounts="libvirt"
 libvirt_groups="disk,kvm"
+
+build_options="systemd"
 
 case "$XBPS_TARGET_MACHINE" in
 	i686*) makedepends+=" libnuma-devel" ;;
