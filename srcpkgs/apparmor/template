@@ -26,7 +26,7 @@ replaces="apparmor-vim>=0"
 CFLAGS="-D_LARGEFILE64_SOURCE"
 CXXFLAGS="-D_LARGEFILE64_SOURCE"
 
-build_options="python perl"
+build_options="python perl systemd"
 build_options_default="python"
 
 if [ "${build_option_perl}" -o "${build_option_python}" ]; then
@@ -75,7 +75,7 @@ do_install() {
 	make -C "${wrksrc}/libraries/libapparmor" "${_args[@]}" install
 	make -C "${wrksrc}/binutils" "${_args[@]}" install
 	make -C "${wrksrc}/utils" "${_args[@]}" VIM_INSTALL_PATH="${DESTDIR}/usr/share/vim/vimfiles/syntax" install
-	make -C "${wrksrc}/parser" "${_args[@]}" APPARMOR_BIN_PREFIX="${DESTDIR}/usr/lib/apparmor" install
+	make -C "${wrksrc}/parser" "${_args[@]}" APPARMOR_BIN_PREFIX="${DESTDIR}/usr/lib/apparmor" install $(vopt_if systemd install-systemd)
 	make -C "${wrksrc}/profiles" "${_args[@]}" install
 
 	vinstall "${wrksrc}/utils/aa-notify.desktop" 644 usr/share/applications
