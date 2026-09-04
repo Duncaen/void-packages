@@ -4,8 +4,9 @@ version=1.58.1
 revision=1
 build_style=meson
 build_helper="gir qemu"
-configure_args="-Dsystemd_journal=false -Dsystemdsystemgeneratordir=no
- -Dlibaudit=no -Dovs=false -Dselinux=false -Dsystemdsystemunitdir=no
+configure_args="$(vopt_bool systemd systemd_journal)
+ $(vopt_if systemd '' '-Dsystemdsystemgeneratordir=no -Dsystemdsystemunitdir=no')
+ -Dlibaudit=no -Dovs=false -Dselinux=false
  -Dpppd=/usr/bin/pppd -Dqt=false
  -Dsession_tracking_consolekit=false
  -Dresolvconf=/usr/bin/resolvconf -Dkernel_firmware_dir=/usr/lib/firmware
@@ -13,8 +14,8 @@ configure_args="-Dsystemd_journal=false -Dsystemdsystemgeneratordir=no
  -Ddhcpcd=/usr/bin/dhcpcd -Diptables=/usr/bin/iptables -Dnft=/usr/bin/nft
  -Diwd=true -Dudev_dir=/usr/lib/udev -Ddocs=false -Dman=true
  $(vopt_bool gir introspection) $(vopt_bool gir vapi)
- -Dsession_tracking=$(vopt_if elogind elogind no)
- -Dsuspend_resume=$(vopt_if elogind elogind upower)
+ -Dsession_tracking=$(vopt_if elogind elogind $(vopt_if systemd systemd no))
+ -Dsuspend_resume=$(vopt_if systemd systemd elogind)
  -Dconfig_dhcp_default=internal -Dtests=no"
 hostmakedepends="bpftool clang gettext-devel glib-devel libxslt-devel pkg-config
  dbus-glib-devel docbook-xsl gtk-doc polkit-devel perl
@@ -24,7 +25,7 @@ makedepends="libbpf-devel libbpf-devel libuuid-devel nss-devel dbus-glib-devel l
  ModemManager-devel readline-devel libndp-devel newt-devel jansson-devel
  libpsl-devel eudev-libudev-devel mobile-broadband-provider-info gnutls-devel
  $(vopt_if gir 'libgirepository-devel python3-gobject')
- $(vopt_if elogind elogind-devel)"
+ $(vopt_if elogind elogind-devel) $(vopt_if systemd libsystemd-devel)"
 depends="dbus iproute2 openresolv wpa_supplicant mobile-broadband-provider-info"
 checkdepends="python3-dbus"
 short_desc="Network Management daemon"
@@ -48,8 +49,8 @@ make_dirs="
 "
 
 # Package build options
-build_options="gir elogind"
-build_options_default="gir elogind"
+build_options="gir elogind systemd"
+build_options_default="gir elogind systemd"
 
 pre_configure() {
 	if [ "$CROSS_BUILD" ]; then
