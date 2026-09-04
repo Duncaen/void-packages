@@ -9,7 +9,7 @@ configure_args="-Degl_device=true -Dudev=true -Dnative_backend=true
  -Dxwayland_initfd=disabled -Dtests=disabled"
 hostmakedepends="gettext glib-devel pkg-config zenity wayland-devel xorg-server
  xorg-server-xwayland python3-argcomplete python3-docutils"
-makedepends="elogind-devel glib-devel gnome-desktop-devel graphene-devel
+makedepends="$(vopt_if systemd libsystemd-devel elogind-devel) glib-devel gnome-desktop-devel graphene-devel
  json-glib-devel libglib-devel libSM-devel libXtst-devel libcanberra-devel
  libinput-devel MesaLib-devel pipewire-devel startup-notification-devel gtk4-devel
  wayland-protocols gnome-settings-daemon-devel libgudev-devel libwacom-devel libei-devel
@@ -26,6 +26,8 @@ checksum=ec102aa3cbb0e39001206627aca3055314555f70609de5e6c2b7efcd1fa90f20
 shlib_provides="libmutter-clutter-16.so libmutter-cogl-16.so
  libmutter-cogl-pango-16.so libmutter-mtk-16.so"
 make_check=no # needs a full graphical session
+
+build_options="systemd"
 
 # Upstream keeps pulling generated headers even though it can cause race
 # conditions in meson/ninja
