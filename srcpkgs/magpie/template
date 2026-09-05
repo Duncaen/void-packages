@@ -7,7 +7,7 @@ build_style=meson
 configure_args="-Degl_device=true -Dudev=true -Dnative_backend=true
  -Dprofiler=false -Dintrospection=true"
 hostmakedepends="gettext glib-devel pkg-config zenity xorg-server"
-makedepends="elogind-devel glib-devel gnome-desktop-devel graphene-devel
+makedepends="$(vopt_if systemd libsystemd-devel elogind-devel) glib-devel gnome-desktop-devel graphene-devel
  json-glib-devel libglib-devel libSM-devel libXtst-devel libcanberra-devel
  libinput-devel MesaLib-devel pipewire-devel startup-notification-devel gtk+3-devel
  gnome-settings-daemon-devel libgudev-devel libwacom-devel"
@@ -21,6 +21,8 @@ checksum=348a572a78e6f199761fa45ebc2a7a8bbf267b8960d32cc4bf6fd4e6012dabdb
 shlib_provides="libmagpie-clutter-0.so libmagpie-cogl-0.so
  libmagpie-cogl-pango-0.so"
 make_check=no # needs a full graphical session
+
+build_options="systemd"
 
 # Upstream keeps pulling generated headers even though it can cause race
 # conditions in meson/ninja
