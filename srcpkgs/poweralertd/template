@@ -5,7 +5,7 @@ revision=1
 build_style=meson
 configure_args="-Dman-pages=enabled"
 hostmakedepends="pkg-config scdoc"
-makedepends="elogind-devel"
+makedepends="$(vopt_if systemd libsystemd-devel elogind-devel)"
 depends="upower"
 short_desc="UPower-powered power alerter"
 maintainer="maxice8 <thinkabit.ukim@gmail.com>"
@@ -14,3 +14,5 @@ homepage="https://git.sr.ht/~kennylevinsen/poweralertd"
 changelog="https://git.sr.ht/~kennylevinsen/poweralertd/refs"
 distfiles="https://git.sr.ht/~kennylevinsen/poweralertd/archive/$version.tar.gz"
 checksum=5b2a1d0fefab62e5ddb5784f2cd3d330f36b3cb5260936f5051f6ff89d8abc3f
+
+build_options="systemd"
