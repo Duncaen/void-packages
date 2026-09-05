@@ -18,7 +18,7 @@ homepage="https://musikcube.com/"
 changelog="https://raw.githubusercontent.com/clangen/musikcube/master/CHANGELOG.txt"
 distfiles="https://github.com/clangen/musikcube/archive/refs/tags/${version}.tar.gz"
 checksum=708292a583bb5072a8dbb14e408c2a1f61de9b8c9786d4e53b3e69bef5dad8c5
-build_options="elogind"
+build_options="elogind systemd"
 desc_option_elogind="Support MPRIS interface via elogind"
 build_options_default="elogind"
 
