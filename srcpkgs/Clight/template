@@ -4,7 +4,7 @@ version=4.11
 revision=3
 build_style=cmake
 hostmakedepends="pkg-config"
-makedepends="popt-devel gsl-devel libconfig-devel elogind-devel bash-completion
+makedepends="popt-devel gsl-devel libconfig-devel $(vopt_if systemd libsystemd-devel elogind-devel) bash-completion
  dbus-devel libmodule-devel"
 depends="Clightd>=5.0"
 short_desc="Use your webcam as a light sensor to adjust screen backlight"
@@ -14,6 +14,8 @@ homepage="https://github.com/FedeDP/Clight"
 changelog="https://github.com/FedeDP/Clight/releases"
 distfiles="https://github.com/FedeDP/Clight/archive/refs/tags/${version}.tar.gz"
 checksum=9a7ec2070b0e1d074477cd219d6894dde9eb85cbe83daebc22054fab29dade34
+
+build_options="systemd"
 
 post_install() {
 	vcompletion Extra/completions/_clight zsh
