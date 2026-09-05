@@ -21,6 +21,8 @@ conflicts="sway>=0"
 provides="sway-${version}_1"
 replaces="sway>=0"
 
+build_options="systemd"
+
 post_install() {
 	vlicense LICENSE
 }
