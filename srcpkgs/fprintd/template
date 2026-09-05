@@ -10,7 +10,7 @@ hostmakedepends="dbus-glib-devel gettext glib-devel
  pkg-config perl python3-cairo python3-pypamtest python3-dbus
  python3-dbusmock libxslt libfprint polkit"
 makedepends="dbus-devel dbus-glib-devel glib-devel pam-devel
- libfprint-devel polkit-devel cairo-devel elogind-devel pam_wrapper"
+ libfprint-devel polkit-devel cairo-devel $(vopt_if systemd libsystemd-devel elogind-devel) pam_wrapper"
 short_desc="Daemon that provides fingerprint scanning functionality"
 maintainer="Enno Boland <gottox@voidlinux.org>"
 license="GPL-2.0-or-later"
@@ -18,3 +18,5 @@ homepage="https://www.freedesktop.org/wiki/Software/fprint/"
 distfiles="https://gitlab.freedesktop.org/libfprint/fprintd/-/archive/v$version/fprintd-v$version.tar.bz2"
 checksum=597466f61fdd5bd1d8af4fe96d982eb07528d28e915200ad789279ed7d8dfb6d
 lib32disabled=yes
+
+build_options="systemd"
