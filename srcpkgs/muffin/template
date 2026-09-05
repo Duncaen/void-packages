@@ -20,7 +20,7 @@ makedepends="cinnamon-desktop-devel libSM-devel libinput-devel fribidi-devel
  libXinerama-devel libICE-devel dbus-devel libglvnd-devel
  eudev-libudev-devel libgudev-devel wayland-devel libgbm-devel pipewire-devel
  libcanberra-devel startup-notification-devel libXtst-devel json-glib-devel
- elogind-devel mutter-devel"
+ $(vopt_if systemd libsystemd elogind-devel) mutter-devel"
 depends="zenity"
 short_desc="Cinnamon window manager based on Mutter"
 maintainer="Orphaned <orphan@voidlinux.org>"
@@ -29,6 +29,8 @@ homepage="https://github.com/linuxmint/muffin"
 changelog="https://raw.githubusercontent.com/linuxmint/muffin/master/debian/changelog"
 distfiles="https://github.com/linuxmint/muffin/archive/${version}.tar.gz"
 checksum=af1aa8e68699895a841415c007c7f3f48efc06f07c50d219d30f8131a981248e
+
+build_options="systemd"
 
 post_install() {
 	vmkdir usr/share/gir-1.0
