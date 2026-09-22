@@ -1,6 +1,6 @@
 # Template file for 'systemd'
 pkgname=systemd
-version=261.3
+version=262
 revision=1
 build_helper="qemu"
 build_style=meson
@@ -49,6 +49,8 @@ configure_args="
 
  -Dukify=enabled
  -Dvmspawn=enabled
+ -Dsysupdate=enabled
+ -Dsysupdated=enabled
 
  $(vopt_bool efi)
  $(vopt_feature acl)
@@ -66,7 +68,6 @@ configure_args="
  $(vopt_feature curl libcurl)
  $(vopt_bool idn)
  $(vopt_feature idn libidn2)
- $(vopt_feature iptc libiptc)
  $(vopt_feature qrencode)
  $(vopt_feature gcrypt)
  $(vopt_feature gnutls)
@@ -96,6 +97,7 @@ hostmakedepends="
  python3-Jinja2
  python3-pefile
  python3-pyelftools
+ python3-lxml
  $(vopt_if bpf "clang bpftool libbpf-devel")"
 makedepends="
  gnu-efi-libs
@@ -116,7 +118,6 @@ makedepends="
  $(vopt_if cryptsetup cryptsetup-devel)
  $(vopt_if curl libcurl-devel)
  $(vopt_if idn libidn2-devel)
- $(vopt_if iptc iptables-devel)
  $(vopt_if qrencode qrencode-devel)
  $(vopt_if gcrypt libgcrypt-devel)
 
@@ -181,7 +182,7 @@ license="LGPL-2.1-or-later, GPL-2.0-or-later, MIT"
 homepage="https://systemd.io/"
 changelog="https://github.com/systemd/systemd/raw/main/NEWS"
 distfiles="https://github.com/systemd/systemd/archive/refs/tags/v${version}.tar.gz"
-checksum=3f8d3d3969af7214bda600930e14c6a24135eb3dce1ba7f1b980b74e6dc15b72
+checksum=6aa77506c0644aa67f940a48e3d3a7368601f787e4f249139516d353f107bcab
 
 case "$XBPS_TARGET_LIBC" in
 glibc)
@@ -226,43 +227,42 @@ make_dirs="
  /var/log/journal 0755 root root"
 
 build_options="
- efi
- bootloader
  acl
  apparmor
  audit
  blkid
- fdisk
- kmod
- seccomp
- xen
- pam
- pwquality
- microhttpd
+ bootloader
+ bpf
+ bzip2
  cryptsetup
  cryptsetup_plugins
  curl
- idn
- iptc
- qrencode
+ efi
+ elfutils
+ fdisk
+ fido2
  gcrypt
  gnutls
+ idn
+ kmod
+ libarchive
+ lz4
+ microhttpd
  openssl
  p11kit
- fido2
- tpm2
- elfutils
- zlib
- bzip2
- xz
- lz4
- zstd
- xkbcommon
- pcre2
- bpf
- libarchive
+ pam
  passwdqc
+ pcre2
  pwquality
+ pwquality
+ qrencode
+ seccomp
+ tpm2
+ xen
+ xkbcommon
+ xz
+ zlib
+ zstd
 "
 build_options_default="${build_options}"
 desc_option_apparmor="Enable support for appamor"
@@ -710,13 +710,18 @@ systemd-cryptsetup_package() {
 		vmove usr/lib/systemd/system/cryptsetup-pre.target
 		vmove usr/lib/systemd/system/cryptsetup.target
 		vmove usr/lib/systemd/system/initrd-root-device.target.wants/remote-cryptsetup.target
+		vmove usr/lib/systemd/system/initrd.target.wants/systemd-cryptenroll-firstboot.service
 		vmove usr/lib/systemd/system/integritysetup-pre.target
 		vmove usr/lib/systemd/system/integritysetup.target
 		vmove usr/lib/systemd/system/remote-cryptsetup.target
+		vmove usr/lib/systemd/system/sockets.target.wants/systemd-cryptenroll.socket
 		vmove usr/lib/systemd/system/sysinit.target.wants/cryptsetup.target
 		vmove usr/lib/systemd/system/sysinit.target.wants/integritysetup.target
 		vmove usr/lib/systemd/system/system-systemd\\x2dcryptsetup.slice
 		vmove usr/lib/systemd/system/system-systemd\\x2dveritysetup.slice
+		vmove usr/lib/systemd/system/systemd-cryptenroll-firstboot.service
+		vmove usr/lib/systemd/system/systemd-cryptenroll.socket
+		vmove usr/lib/systemd/system/systemd-cryptenroll@.service
 		vmove usr/lib/systemd/systemd-cryptsetup
 		vmove usr/lib/systemd/systemd-integritysetup
 		vmove usr/lib/systemd/systemd-veritysetup
@@ -731,6 +736,8 @@ systemd-cryptsetup_package() {
 		vmove usr/share/man/man8/systemd-veritysetup-generator.8
 		vmove usr/share/man/man8/systemd-veritysetup.8
 		vmove usr/share/man/man8/systemd-veritysetup@.service.8
+		vmove usr/share/polkit-1/actions/io.systemd.cryptenroll.policy
+		vmove usr/share/zsh/site-functions/_systemd-cryptenroll
 	}
 }
 
@@ -793,13 +800,11 @@ systemd-udev_package() {
 		vmove etc/udev/udev.conf
 		vmove usr/bin/udevadm
 		vmove usr/lib/systemd/system/initrd-udevadm-cleanup-db.service
-		vmove usr/lib/systemd/system/sockets.target.wants/systemd-udevd-control.socket
 		vmove usr/lib/systemd/system/sockets.target.wants/systemd-udevd-kernel.socket
 		vmove usr/lib/systemd/system/sysinit.target.wants/systemd-udev-trigger.service
 		vmove usr/lib/systemd/system/sysinit.target.wants/systemd-udevd.service
 		vmove usr/lib/systemd/system/systemd-udev-settle.service
 		vmove usr/lib/systemd/system/systemd-udev-trigger.service
-		vmove usr/lib/systemd/system/systemd-udevd-control.socket
 		vmove usr/lib/systemd/system/systemd-udevd-kernel.socket
 		vmove usr/lib/systemd/system/systemd-udevd.service
 		vmove usr/lib/systemd/systemd-udevd
@@ -810,7 +815,6 @@ systemd-udev_package() {
 		vmove usr/share/man/man5/udev.conf.5
 		vmove usr/share/man/man7/udev.7
 		vmove usr/share/man/man8/systemd-udev-settle.service.8
-		vmove usr/share/man/man8/systemd-udevd-control.socket.8
 		vmove usr/share/man/man8/systemd-udevd-kernel.socket.8
 		vmove usr/share/man/man8/systemd-udevd.8
 		vmove usr/share/man/man8/systemd-udevd.service.8
@@ -1012,5 +1016,131 @@ systemd-vmspawn_package() {
 		vmove usr/lib/systemd/user/systemd-vmspawn@.service
 		vmove usr/share/bash-completion/completions/systemd-vmspawn
 		vmove usr/share/man/man1/systemd-vmspawn.1
+	}
+}
+
+systemd-sysupdate_package() {
+	depends="systemd>=${version}_${revision}"
+	short_desc+=" - Automatically Update OS or Other Resources"
+	pkg_install() {
+		vmove usr/lib/systemd/system/sockets.target.wants/systemd-sysupdate.socket
+		vmove usr/lib/systemd/system/systemd-sysupdate-auto-enable.service
+		vmove usr/lib/systemd/system/systemd-sysupdate-notify-bootctl.socket
+		vmove usr/lib/systemd/system/systemd-sysupdate-notify-bootctl@.service
+		vmove usr/lib/systemd/system/systemd-sysupdate-notify-pcrlock.socket
+		vmove usr/lib/systemd/system/systemd-sysupdate-notify-pcrlock@.service
+		vmove usr/lib/systemd/system/systemd-sysupdate-notify-sysext.socket
+		vmove usr/lib/systemd/system/systemd-sysupdate-notify-sysext@.service
+		vmove usr/lib/systemd/system/systemd-sysupdate-reboot.service
+		vmove usr/lib/systemd/system/systemd-sysupdate-reboot.timer
+		vmove usr/lib/systemd/system/systemd-sysupdate-update.service
+		vmove usr/lib/systemd/system/systemd-sysupdate-update.timer
+		vmove usr/lib/systemd/system/systemd-sysupdate.service
+		vmove usr/lib/systemd/system/systemd-sysupdate.socket
+		vmove usr/lib/systemd/system/systemd-sysupdate.timer
+		vmove usr/lib/systemd/system/systemd-sysupdate@.service
+		vmove usr/lib/systemd/systemd-sysupdate
+		vmove usr/share/bash-completion/completions/systemd-sysupdate
+		vmove usr/share/man/man5/sysupdate.components.5
+		vmove usr/share/man/man5/sysupdate.d.5
+		vmove usr/share/man/man5/sysupdate.features.5
+		vmove usr/share/man/man8/systemd-sysupdate-auto-enable.service.8
+		vmove usr/share/man/man8/systemd-sysupdate-reboot.service.8
+		vmove usr/share/man/man8/systemd-sysupdate-reboot.timer.8
+		vmove usr/share/man/man8/systemd-sysupdate-update.service.8
+		vmove usr/share/man/man8/systemd-sysupdate-update.timer.8
+		vmove usr/share/man/man8/systemd-sysupdate.8
+		vmove usr/share/man/man8/systemd-sysupdate.service.8
+		vmove usr/share/man/man8/systemd-sysupdate.timer.8
+		vmove usr/share/zsh/site-functions/_systemd-sysupdate
+	}
+}
+
+systemd-sysupdated_package() {
+	depends="systemd>=${version}_${revision}"
+	short_desc+=" - System Update Service"
+	pkg_install() {
+		vmove usr/bin/updatectl
+		vmove usr/lib/systemd/system/dbus-org.freedesktop.sysupdate1.service
+		vmove usr/lib/systemd/system/systemd-sysupdated.service
+		vmove usr/lib/systemd/systemd-sysupdated
+		vmove usr/share/bash-completion/completions/updatectl
+		vmove usr/share/dbus-1/interfaces/org.freedesktop.sysupdate1.Job.xml
+		vmove usr/share/dbus-1/interfaces/org.freedesktop.sysupdate1.Manager.xml
+		vmove usr/share/dbus-1/interfaces/org.freedesktop.sysupdate1.Target.xml
+		vmove usr/share/dbus-1/system-services/org.freedesktop.sysupdate1.service
+		vmove usr/share/dbus-1/system.d/org.freedesktop.sysupdate1.conf
+		vmove usr/share/man/man1/updatectl.1
+		vmove usr/share/man/man5/org.freedesktop.sysupdate1.5
+		vmove usr/share/man/man8/systemd-sysupdated.8
+		vmove usr/share/man/man8/systemd-sysupdated.service.8
+		vmove usr/share/polkit-1/actions/org.freedesktop.sysupdate1.policy
+		vmove usr/share/zsh/site-functions/_updatectl
+	}
+}
+
+systemd-report_package() {
+	depends="systemd>=${version}_${revision}"
+	short_desc+=" - Generate report of system facts and metrics"
+	pkg_install() {
+		vmove usr/lib/systemd/system/systemd-report-basic.socket
+		vmove usr/lib/systemd/system/systemd-report-basic@.service
+		vmove usr/lib/systemd/system/systemd-report-cgroup.socket
+		vmove usr/lib/systemd/system/systemd-report-cgroup@.service
+		vmove usr/lib/systemd/system/systemd-report-files.socket
+		vmove usr/lib/systemd/system/systemd-report-files@.service
+		vmove usr/lib/systemd/system/systemd-report-sign-plain.socket
+		vmove usr/lib/systemd/system/systemd-report-sign-plain@.service
+		vmove usr/lib/systemd/system/systemd-report-sign-tpm2.socket
+		vmove usr/lib/systemd/system/systemd-report-sign-tpm2@.service
+		vmove usr/lib/systemd/system/systemd-report-sign-tsm.socket
+		vmove usr/lib/systemd/system/systemd-report-sign-tsm@.service
+		vmove usr/lib/systemd/system/systemd-report.socket
+		vmove usr/lib/systemd/system/systemd-report@.service
+		vmove usr/lib/systemd/systemd-report
+		vmove usr/lib/systemd/systemd-report-basic
+		vmove usr/lib/systemd/systemd-report-cgroup
+		vmove usr/lib/systemd/systemd-report-files
+		vmove usr/lib/systemd/systemd-report-sign-plain
+		vmove usr/lib/systemd/systemd-report-sign-tpm2
+		vmove usr/lib/systemd/systemd-report-sign-tsm
+		vmove usr/share/man/man1/systemd-report.1
+		vmove usr/share/man/man8/systemd-report-files.8
+		vmove usr/share/man/man8/systemd-report-files.socket.8
+		vmove usr/share/man/man8/systemd-report-files@.service.8
+		vmove usr/share/man/man8/systemd-report-sign-plain.8
+		vmove usr/share/man/man8/systemd-report-sign-plain.socket.8
+		vmove usr/share/man/man8/systemd-report-sign-plain@.service.8
+		vmove usr/share/man/man8/systemd-report-sign-tpm2.8
+		vmove usr/share/man/man8/systemd-report-sign-tpm2.socket.8
+		vmove usr/share/man/man8/systemd-report-sign-tpm2@.service.8
+		vmove usr/share/man/man8/systemd-report-sign-tsm.8
+		vmove usr/share/man/man8/systemd-report-sign-tsm.socket.8
+		vmove usr/share/man/man8/systemd-report-sign-tsm@.service.8
+	}
+}
+
+systemd-imds_package() {
+	depends="systemd>=${version}_${revision}"
+	short_desc+=" - Cloud IMDS (Instance Metadata Service) "
+	pkg_install() {
+		vmove usr/lib/systemd/system-generators/systemd-imds-generator
+		vmove usr/lib/systemd/system/systemd-imds-early-network.service
+		vmove usr/lib/systemd/system/systemd-imds-import.service
+		vmove usr/lib/systemd/system/systemd-imds-metrics.socket
+		vmove usr/lib/systemd/system/systemd-imds-metrics@.service
+		vmove usr/lib/systemd/system/systemd-imdsd.socket
+		vmove usr/lib/systemd/system/systemd-imdsd@.service
+		vmove usr/lib/systemd/systemd-imds
+		vmove usr/lib/systemd/systemd-imdsd
+		vmove usr/lib/sysusers.d/systemd-imds.conf
+		vmove usr/share/man/man1/systemd-imds-import.service.1
+		vmove usr/share/man/man1/systemd-imds.1
+		vmove usr/share/man/man8/systemd-imds-generator.8
+		vmove usr/share/man/man8/systemd-imdsd-early-network.service.8
+		vmove usr/share/man/man8/systemd-imdsd.8
+		vmove usr/share/man/man8/systemd-imdsd.socket.8
+		vmove usr/share/man/man8/systemd-imdsd@.service.8
+		vmove usr/share/polkit-1/actions/io.systemd.imds.policy
 	}
 }
