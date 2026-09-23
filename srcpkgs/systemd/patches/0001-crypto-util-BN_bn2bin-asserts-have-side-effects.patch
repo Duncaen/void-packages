@@ -1,0 +1,27 @@
+From 88895ccfc1f4c2ee653873e37727e59b6860a221 Mon Sep 17 00:00:00 2001
+From: Duncan Overbruck <mail@duncano.de>
+Date: Wed, 23 Sep 2026 16:37:48 +0200
+Subject: [PATCH] crypto-util: BN_bn2bin asserts have side-effects
+
+---
+ src/shared/crypto-util.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/shared/crypto-util.c b/src/shared/crypto-util.c
+index 3258f8f906..24230f0950 100644
+--- a/src/shared/crypto-util.c
++++ b/src/shared/crypto-util.c
+@@ -1617,8 +1617,8 @@ int rsa_pkey_to_n_e(
+         if (!n || !e)
+                 return log_oom_debug();
+ 
+-        assert(sym_BN_bn2bin(bn_n, n) == (int) n_size);
+-        assert(sym_BN_bn2bin(bn_e, e) == (int) e_size);
++        assert_se(sym_BN_bn2bin(bn_n, n) == (int) n_size);
++        assert_se(sym_BN_bn2bin(bn_e, e) == (int) e_size);
+ 
+         *ret_n = TAKE_PTR(n);
+         *ret_n_size = n_size;
+-- 
+2.55.0
+
