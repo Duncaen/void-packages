@@ -3,9 +3,9 @@ pkgname=pcsclite
 version=2.5.2
 revision=1
 build_style=meson
-configure_args="-Dlibudev=true -Dlibsystemd=false -Dpolkit=false"
+configure_args="-Dlibudev=true $(vopt_bool systemd libsystemd) -Dsystemdunit=system -Dpolkit=false"
 hostmakedepends="pkg-config python3 flex perl"
-makedepends="eudev-libudev-devel libusb-devel python3-devel"
+makedepends="eudev-libudev-devel libusb-devel python3-devel $(vopt_if systemd libsystemd-devel)"
 depends="python3"
 short_desc="Middleware to access a smart card using SCard API (PC/SC)"
 maintainer="Andrew Benson <abenson+void@gmail.com>"
@@ -13,6 +13,15 @@ license="BSD-2-Clause, GPL-3.0-or-later"
 homepage="https://salsa.debian.org/debian/pcsc-lite"
 distfiles="https://salsa.debian.org/debian/pcsc-lite/-/archive/upstream/${version}/pcsc-lite-upstream-${version}.tar.gz"
 checksum=822c31c4194f8ccc2e448fed6dd6b13e081f6ff9fdecf10a29ff64154f51d63d
+
+build_options="systemd"
+
+post_patch() {
+	vsed -e 's/u! pcscd/u! _pcscd/' -i etc/pcscd-sysusers.conf
+	vsed -e 's/User=pcscd/User=_pcscd/' -i etc/pcscd.service.in
+	vsed -e 's/SocketUser=pcscd/SocketUser=_pcscd/' -i etc/pcscd.socket.in
+	vsed -e 's/SocketGroup=pcscd/SockeGroup=_pcscd/' -i etc/pcscd.socket.in
+}
 
 post_install() {
 	vsv pcscd
