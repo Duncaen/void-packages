@@ -1,6 +1,6 @@
 # Template file for 'systemd'
 pkgname=systemd
-version=262.1
+version=262.2
 revision=1
 build_helper="qemu"
 build_style=meson
@@ -182,7 +182,7 @@ license="LGPL-2.1-or-later, GPL-2.0-or-later, MIT"
 homepage="https://systemd.io/"
 changelog="https://github.com/systemd/systemd/raw/main/NEWS"
 distfiles="https://github.com/systemd/systemd/archive/refs/tags/v${version}.tar.gz"
-checksum=100fc873b848b9b0297d8a705e8e2ed326256c8483d9960ee1ffe264c8a5c3e3
+checksum=116432ee9dce9bfef4c7da7963c6de41899ab44197f2876ee99545707a5c7c1f
 
 case "$XBPS_TARGET_LIBC" in
 glibc)
